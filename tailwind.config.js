@@ -7,6 +7,20 @@ export default {
   theme: {
     extend: {
       colors: {
+        journal: {
+          bg: '#FAF7F0',
+          card: '#FFF8EE',
+          secondary: '#F6EAD8',
+          border: '#E6D5B8',
+          text: '#5C4B3B',
+          muted: '#8B7355',
+          accent: '#E7B96A',
+        },
+        archive: {
+          bg: '#F3EBDC',
+          card: '#FFF5E6',
+          shelf: '#E8DCC8',
+        },
         amber: {
           gold: '#D4A574',
           light: '#E8C9A0',
@@ -43,8 +57,8 @@ export default {
           '50%': { opacity: '1', transform: 'scale(1.05)' },
         },
         float: {
-          '0%, 100%': { transform: 'translateY(0px)' },
-          '50%': { transform: 'translateY(-10px)' },
+          '0%, 100%': { transform: 'translateY(0px) rotate(var(--float-rotate, 0deg))' },
+          '50%': { transform: 'translateY(-10px) rotate(var(--float-rotate, 0deg))' },
         },
         'pulse-soft': {
           '0%, 100%': { opacity: '1' },

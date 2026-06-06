@@ -5,6 +5,9 @@ import { Send, Sparkles, Loader2 } from 'lucide-react';
 import { useAppStore } from '@/store';
 import { SPIRITS } from '@/constants';
 import SpiritAvatar from '@/components/SpiritAvatar';
+import PageShell from '@/components/PageShell';
+import JournalEntry from '@/components/JournalEntry';
+import { BookmarkRibbon, FeatherPen } from '@/components/ScrapbookDecor';
 import type { SpiritType } from '@/types';
 import { getDialogueResponse } from '@/services/deepseekApi';
 import type { DialogueMessage, SoulPool, VisualAnalysisResult } from '@/types';
@@ -32,6 +35,7 @@ const DialoguePage = () => {
   const updateSoulPool = useAppStore((state) => state.updateSoulPool);
   const setStage = useAppStore((state) => state.setStage);
   const visualAnalysis = useAppStore((state) => state.visualAnalysis);
+  const photoUrl = useAppStore((state) => state.photoUrl);
   const setObservationRecord = useAppStore((state) => state.setObservationRecord);
   const setIsGeneratingObservation = useAppStore((state) => state.setIsGeneratingObservation);
   const setObservationError = useAppStore((state) => state.setObservationError);
@@ -102,7 +106,6 @@ const DialoguePage = () => {
     navigate,
   ]);
 
-  // Round 1：智慧灵首发，调用 DeepSeek 生成个性化提问
   useEffect(() => {
     if (currentRound !== 1 || dialogueHistory.length !== 0 || !visualAnalysis) return;
     if (round1Initialized.current) return;
@@ -138,7 +141,6 @@ const DialoguePage = () => {
     setUserInput('');
     setFetchError(null);
 
-    // 先写入用户消息
     addDialogueMessage({
       role: 'user',
       speaker: currentSpeaker,
@@ -162,7 +164,6 @@ const DialoguePage = () => {
 
     setIsFetching(true);
     try {
-      // 构建包含用户刚才回答的最新 history（store 是异步更新，手动拼）
       const updatedHistory = [
         ...dialogueHistory,
         { role: 'user' as const, speaker: currentSpeaker, content: userText, timestamp: Date.now() },
@@ -227,235 +228,156 @@ const DialoguePage = () => {
     (!isGeneratingObservation && !!observationRecord) || !!observationError;
 
   return (
-    <motion.div
-      className="min-h-screen flex flex-col"
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      exit={{ opacity: 0 }}
-    >
-      {/* 顶部进度条 */}
+    <PageShell ambience="focus" photoUrl={photoUrl}>
       <motion.div
-        className="fixed top-0 left-0 right-0 h-1 bg-ink-light"
-        initial={{ scaleX: 0 }}
-        animate={{ scaleX: currentRound / 3 }}
-        transition={{ duration: 0.5 }}
-        style={{
-          backgroundColor: currentSpirit?.color || '#D4A574',
-          transformOrigin: 'left',
-        }}
-      />
-
-      {/* 进度指示 */}
-      <div className="fixed top-4 left-1/2 -translate-x-1/2 flex items-center gap-4">
-        <span className="text-sm text-amber-light/70 font-hei">
-          Round {currentRound}/3
-        </span>
-        <div className="flex gap-1">
-          {[1, 2, 3].map((round) => (
-            <motion.div
-              key={round}
-              className={`w-8 h-8 rounded-full flex items-center justify-center text-xs ${
-                round <= currentRound
-                  ? 'bg-amber-gold text-ink-blue'
-                  : 'bg-ink-light text-amber-light/50'
-              }`}
-              animate={round === currentRound ? { scale: [1, 1.1, 1] } : {}}
-              transition={{ duration: 0.5, repeat: Infinity }}
-            >
-              {round}
-            </motion.div>
-          ))}
-        </div>
-      </div>
-
-      {/* 灵宠形象区 */}
-      <motion.div
-        className="flex-1 flex flex-col md:flex-row items-center justify-center gap-8 px-4 py-20"
+        className="min-h-screen flex flex-col"
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
-        transition={{ delay: 0.3 }}
+        exit={{ opacity: 0 }}
       >
-        {currentSpirit && (
-          <motion.div
-            className="relative"
-            animate={{ y: [0, -10, 0] }}
-            transition={{ duration: 2, repeat: Infinity, ease: 'easeInOut' }}
-          >
-            <div
-              className="w-24 h-24 md:w-32 md:h-32 rounded-full flex items-center justify-center text-4xl md:text-5xl glow-spirit"
-              style={{
-                backgroundColor: `${currentSpirit.color}20`,
-                border: `3px solid ${currentSpirit.color}`,
-                boxShadow: `0 0 30px ${currentSpirit.color}40`,
-              }}
-            >
-              <SpiritAvatar spirit={currentSpirit} size="large" className="w-full h-full" />
-            </div>
-            <motion.div
-              className="absolute -bottom-6 left-1/2 -translate-x-1/2 whitespace-nowrap"
-              style={{ color: currentSpirit.color }}
-            >
-              <span className="text-lg font-song font-bold">{currentSpirit.name}</span>
-            </motion.div>
-          </motion.div>
-        )}
-
-        {/* 对话区域 */}
-        <div className="flex-1 max-w-xl space-y-4 overflow-y-auto px-4 pb-24">
-          {dialogueHistory.map((message, index) => {
-            const spirit = SPIRITS[message.speaker];
-            return (
-              <motion.div
-                key={index}
-                className={`flex gap-3 ${message.role === 'user' ? 'flex-row-reverse' : ''}`}
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: index * 0.05 }}
-              >
-                {message.role === 'spirit' && (
-                  <div
-                    className="w-10 h-10 rounded-full flex items-center justify-center text-lg shrink-0"
-                    style={{
-                      backgroundColor: `${spirit.color}20`,
-                      border: `2px solid ${spirit.color}`,
-                    }}
-                  >
-                    <SpiritAvatar spirit={spirit} size="small" className="w-8 h-8" />
-                  </div>
-                )}
-
-                <motion.div
-                  className={`px-4 py-3 rounded-2xl max-w-[80%] ${
-                    message.role === 'user'
-                      ? 'bg-amber-gold/20 text-amber-light'
-                      : 'bg-ink-light/50 text-amber-light'
-                  }`}
-                  style={
-                    message.role === 'spirit'
-                      ? { borderLeft: `3px solid ${spirit.color}` }
-                      : {}
-                  }
-                >
-                  <p className="text-sm md:text-base font-hei leading-relaxed">
-                    {message.content}
-                  </p>
-                </motion.div>
-              </motion.div>
-            );
-          })}
-
-          {/* 灵宠思考中动画 */}
-          {isFetching && (
-            <motion.div
-              className="flex gap-3"
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-            >
-              {currentSpirit && (
-                <div
-                  className="w-10 h-10 rounded-full flex items-center justify-center text-lg shrink-0"
-                  style={{
-                    backgroundColor: `${currentSpirit.color}20`,
-                    border: `2px solid ${currentSpirit.color}`,
-                  }}
-                >
-                  <SpiritAvatar spirit={currentSpirit} size="small" className="w-8 h-8" />
-                </div>
-              )}
-              <div className="px-4 py-3 rounded-2xl bg-ink-light/50 flex items-center gap-2">
-                <Loader2 className="w-4 h-4 animate-spin text-amber-gold" />
-                <span className="text-sm text-amber-light/60 font-hei">灵宠正在感知……</span>
-              </div>
-            </motion.div>
-          )}
-
-          {isPendingObservationNav && (
-            <motion.div
-              className="flex gap-3"
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-            >
-              {currentSpirit && (
-                <div
-                  className="w-10 h-10 rounded-full flex items-center justify-center text-lg shrink-0"
-                  style={{
-                    backgroundColor: `${currentSpirit.color}20`,
-                    border: `2px solid ${currentSpirit.color}`,
-                  }}
-                >
-                  <SpiritAvatar spirit={currentSpirit} size="small" className="w-8 h-8" />
-                </div>
-              )}
-              <div className="px-4 py-3 rounded-2xl bg-ink-light/50 flex items-center gap-2">
-                <Loader2 className="w-4 h-4 animate-spin text-amber-gold" />
-                <span className="text-sm text-amber-light/60 font-hei">
-                  {reportReadyForNav ? '即将进入观察记录…' : '灵宠正在整理观察记录…'}
-                </span>
-              </div>
-            </motion.div>
-          )}
-
-          {/* 错误提示 */}
-          {fetchError && (
-            <motion.div
-              className="text-center py-2"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-            >
-              <p className="text-xs text-red-400/80 font-hei">{fetchError}</p>
-              <button
-                className="mt-1 text-xs text-amber-gold underline"
-                onClick={() => { setFetchError(null); handleSend(); }}
-              >
-                重试
-              </button>
-            </motion.div>
-          )}
+        {/* Progress ribbon */}
+        <div className="fixed top-4 left-1/2 -translate-x-1/2 z-20">
+          <BookmarkRibbon label={`第 ${currentRound}/3 页`} />
         </div>
-      </motion.div>
 
-      {/* 输入区域 */}
-      {!isPendingObservationNav && (
-      <motion.div
-        className="fixed bottom-0 left-0 right-0 p-4 bg-ink-blue/80 backdrop-blur-sm"
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.5 }}
-      >
-        <div className="max-w-xl mx-auto">
-          <div className="flex gap-3">
-          <input
-            type="text"
-            value={userInput}
-            onChange={(e) => setUserInput(e.target.value)}
-            onKeyDown={handleKeyDown}
-            placeholder="简短回答即可（是/否/一句话）"
-            className="flex-1 px-4 py-3 rounded-full bg-ink-light/50 text-amber-light placeholder:text-amber-light/50 border border-amber-gold/30 focus:border-amber-gold focus:outline-none transition-all"
-            disabled={isFetching || isPendingObservationNav}
-          />
-          <motion.button
-            onClick={handleSend}
-            disabled={!userInput.trim() || isFetching || isPendingObservationNav}
-            className={`px-6 py-3 rounded-full bg-amber-gold text-ink-blue flex items-center gap-2 ${
-              !userInput.trim() || isFetching || isPendingObservationNav ? 'opacity-50' : ''
-            }`}
-            whileHover={userInput.trim() && !isFetching && !isPendingObservationNav ? { scale: 1.05 } : {}}
-            whileTap={userInput.trim() && !isFetching && !isPendingObservationNav ? { scale: 0.95 } : {}}
-          >
-            {isFetching ? (
-              <Loader2 className="w-4 h-4 animate-spin" />
-            ) : (
-              <>
-                <Send className="w-4 h-4" />
-                <Sparkles className="w-4 h-4" />
-              </>
+        {/* Round tabs */}
+        <div className="fixed top-16 left-1/2 -translate-x-1/2 flex gap-2 z-20">
+          {[1, 2, 3].map((round) => (
+            <div
+              key={round}
+              className={`px-3 py-1 rounded-md text-xs font-song border transition-colors ${
+                round <= currentRound
+                  ? 'bg-journal-accent/30 border-journal-accent text-journal-text'
+                  : 'bg-journal-card border-journal-border text-journal-muted'
+              }`}
+              style={
+                round === currentRound && currentSpirit
+                  ? { borderColor: currentSpirit.color }
+                  : undefined
+              }
+            >
+              记录 {round}
+            </div>
+          ))}
+        </div>
+
+        <div className="flex-1 flex flex-col items-center px-4 pt-28 pb-36 max-w-2xl mx-auto w-full">
+          {/* Open journal notebook */}
+          <div className="journal-card w-full p-5 md:p-6 relative paper-texture min-h-[400px]">
+            {/* Spirit stamp header */}
+            {currentSpirit && (
+              <div className="flex items-center gap-3 mb-6 pb-4 border-b border-journal-border/50">
+                <div
+                  className="w-14 h-14 rounded-full flex items-center justify-center shrink-0"
+                  style={{
+                    backgroundColor: `${currentSpirit.color}12`,
+                    border: `2px solid ${currentSpirit.color}`,
+                  }}
+                >
+                  <SpiritAvatar spirit={currentSpirit} size="large" className="w-11 h-11" />
+                </div>
+                <div>
+                  <p className="text-xs text-journal-muted font-hei">当前记录者</p>
+                  <p className="text-lg font-song font-bold" style={{ color: currentSpirit.color }}>
+                    {currentSpirit.name}
+                  </p>
+                </div>
+                <span className="ml-auto text-2xl opacity-30">🌸</span>
+              </div>
             )}
-          </motion.button>
+
+            {/* Journal entries timeline */}
+            <div className="space-y-4 max-h-[50vh] overflow-y-auto pr-1">
+              {dialogueHistory.map((message, index) => {
+                const spirit = SPIRITS[message.speaker];
+                return (
+                  <div
+                    key={index}
+                    className={message.role === 'user' ? 'flex justify-end' : ''}
+                  >
+                    <JournalEntry
+                      role={message.role}
+                      content={message.content}
+                      spirit={message.role === 'spirit' ? spirit : undefined}
+                      index={index}
+                    />
+                  </div>
+                );
+              })}
+
+              {isFetching && currentSpirit && (
+                <JournalEntry role="loading" spirit={currentSpirit} loadingText="灵宠正在感知……" />
+              )}
+
+              {isPendingObservationNav && currentSpirit && (
+                <JournalEntry
+                  role="loading"
+                  spirit={currentSpirit}
+                  loadingText={
+                    reportReadyForNav ? '即将进入观察记录…' : '灵宠正在整理观察记录…'
+                  }
+                />
+              )}
+
+              {fetchError && (
+                <div className="text-center py-2">
+                  <p className="text-xs text-red-500/80 font-hei">{fetchError}</p>
+                  <button
+                    className="mt-1 text-xs text-journal-accent underline"
+                    onClick={() => { setFetchError(null); handleSend(); }}
+                  >
+                    重试
+                  </button>
+                </div>
+              )}
+            </div>
           </div>
         </div>
+
+        {/* Input area - lined paper style */}
+        {!isPendingObservationNav && (
+          <motion.div
+            className="fixed bottom-0 left-0 right-0 p-4 bg-journal-card/90 backdrop-blur-sm border-t border-journal-border z-20"
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.5 }}
+          >
+            <div className="max-w-2xl mx-auto">
+              <div className="flex gap-3 items-end">
+                <FeatherPen className="mb-3 shrink-0" />
+                <input
+                  type="text"
+                  value={userInput}
+                  onChange={(e) => setUserInput(e.target.value)}
+                  onKeyDown={handleKeyDown}
+                  placeholder="简短回答即可（是/否/一句话）"
+                  className="flex-1 px-4 py-3 rounded-lg bg-journal-bg paper-texture text-journal-text placeholder:text-journal-muted/60 border border-journal-border focus:border-journal-accent focus:outline-none transition-all font-hei"
+                  disabled={isFetching || isPendingObservationNav}
+                />
+                <motion.button
+                  onClick={handleSend}
+                  disabled={!userInput.trim() || isFetching || isPendingObservationNav}
+                  className={`px-5 py-3 rounded-lg bg-journal-accent text-journal-text flex items-center gap-2 font-song ${
+                    !userInput.trim() || isFetching || isPendingObservationNav ? 'opacity-50' : ''
+                  }`}
+                  whileHover={userInput.trim() && !isFetching && !isPendingObservationNav ? { scale: 1.05 } : {}}
+                  whileTap={userInput.trim() && !isFetching && !isPendingObservationNav ? { scale: 0.95 } : {}}
+                >
+                  {isFetching ? (
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                  ) : (
+                    <>
+                      <Send className="w-4 h-4" />
+                      <Sparkles className="w-4 h-4" />
+                    </>
+                  )}
+                </motion.button>
+              </div>
+            </div>
+          </motion.div>
+        )}
       </motion.div>
-      )}
-    </motion.div>
+    </PageShell>
   );
 };
 

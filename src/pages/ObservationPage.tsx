@@ -5,6 +5,8 @@ import { useAppStore } from '@/store';
 import { SPIRITS } from '@/constants';
 import { prefetchFinalResult, prefetchObservationAndResult } from '@/utils/prefetchOutcome';
 import SpiritAvatar from '@/components/SpiritAvatar';
+import PageShell from '@/components/PageShell';
+import { WashiTape } from '@/components/ScrapbookDecor';
 import type { SpiritType } from '@/types';
 
 const LABEL_TO_SPIRIT: Record<string, SpiritType> = {
@@ -101,39 +103,42 @@ const ObservationPage = () => {
 
   if (isGeneratingObservation || !observationRecord) {
     return (
-      <motion.div
-        className="min-h-screen flex flex-col items-center justify-center px-4"
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-      >
-        {observationError ? (
-          <>
-            <p className="text-amber-light/70 font-hei mb-4 text-center">{observationError}</p>
-            <motion.button
-              onClick={handleRetry}
-              className="btn-primary flex items-center gap-2"
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
-            >
-              <RefreshCw className="w-4 h-4" />
-              <span>重新生成观察记录</span>
-            </motion.button>
-          </>
-        ) : (
-          <>
-            <Loader2 className="w-10 h-10 animate-spin text-amber-gold mb-4" />
-            <p className="text-amber-light/70 font-hei">灵宠正在整理观察记录……</p>
-          </>
-        )}
-      </motion.div>
+      <PageShell ambience="focus">
+        <motion.div
+          className="min-h-screen flex flex-col items-center justify-center px-4"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+        >
+          {observationError ? (
+            <>
+              <p className="text-journal-muted font-hei mb-4 text-center">{observationError}</p>
+              <motion.button
+                onClick={handleRetry}
+                className="btn-primary flex items-center gap-2"
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+              >
+                <RefreshCw className="w-4 h-4" />
+                <span>重新生成观察记录</span>
+              </motion.button>
+            </>
+          ) : (
+            <>
+              <Loader2 className="w-10 h-10 animate-spin text-journal-accent mb-4" />
+              <p className="text-journal-muted font-hei">灵宠正在整理观察记录……</p>
+            </>
+          )}
+        </motion.div>
+      </PageShell>
     );
   }
 
   const resultReady = !!finalResult && !isGeneratingResult;
 
   return (
+    <PageShell ambience="focus">
     <motion.div
-      className="min-h-screen flex flex-col px-4 py-8"
+      className="min-h-screen flex flex-col px-4 py-8 max-w-6xl mx-auto"
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
@@ -143,11 +148,11 @@ const ObservationPage = () => {
         initial={{ opacity: 0, y: -20 }}
         animate={{ opacity: 1, y: 0 }}
       >
-        <h2 className="text-3xl font-song font-bold text-gradient mb-2">
-          灵宠观察记录
+        <h2 className="text-3xl font-song font-bold text-gradient-warm mb-2">
+          观察记录
         </h2>
-        <p className="text-amber-light/70 font-hei">
-          {topSpirit.name}为你整理的桌面洞察
+        <p className="text-journal-muted font-hei">
+          灵宠们留下的桌面笔记 · {topSpirit.name}为你整理
         </p>
       </motion.div>
 
@@ -159,25 +164,26 @@ const ObservationPage = () => {
       >
         {/* 列1：本轮发现 */}
         <motion.div
-          className="card p-4 h-full overflow-hidden flex flex-col"
+          className="journal-card p-4 h-full overflow-hidden flex flex-col relative"
           initial={{ opacity: 0, x: -20 }}
           animate={{ opacity: 1, x: 0 }}
           transition={{ delay: 0.25 }}
         >
+          <WashiTape className="-top-2 left-4" color="#E7B96A" />
           <div className="flex items-center gap-2 mb-3">
-            <Lightbulb className="w-4 h-4 text-amber-gold shrink-0" />
-            <h3 className="text-base font-song font-bold text-amber-light">本轮发现</h3>
+            <Lightbulb className="w-4 h-4 text-journal-accent shrink-0" />
+            <h3 className="text-base font-song font-bold text-journal-text">本轮发现</h3>
           </div>
           <ul className="space-y-2 flex-1">
             {observationRecord.discoveries.map((item, index) => (
               <motion.li
                 key={index}
-                className="flex items-start gap-2 text-sm text-amber-light/80 font-hei"
+                className="flex items-start gap-2 text-sm text-journal-text/90 font-hei"
                 initial={{ opacity: 0, x: -10 }}
                 animate={{ opacity: 1, x: 0 }}
                 transition={{ delay: 0.3 + index * 0.05 }}
               >
-                <span className="text-amber-gold shrink-0">✓</span>
+                <span className="text-journal-accent shrink-0">✓</span>
                 {item}
               </motion.li>
             ))}
@@ -186,17 +192,17 @@ const ObservationPage = () => {
 
         {/* 列2：灵宠吐槽 */}
         <motion.div
-          className="card p-4 h-full overflow-hidden flex flex-col"
+          className="journal-card p-4 h-full overflow-hidden flex flex-col relative"
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.3 }}
         >
           <div className="flex items-center gap-2 mb-3">
-            <MessageCircle className="w-4 h-4 shrink-0 text-amber-gold" />
-            <h3 className="text-base font-song font-bold text-amber-light">灵宠吐槽</h3>
+            <MessageCircle className="w-4 h-4 shrink-0 text-journal-accent" />
+            <h3 className="text-base font-song font-bold text-journal-text">灵宠吐槽</h3>
           </div>
           <div className="space-y-3 overflow-y-auto flex-1">
-            {observationRecord.spiritComments.map((comment, index) => {
+            {observationRecord.spiritComments.slice(0, 2).map((comment, index) => {
               const spirit = getSpiritByLabel(comment.speaker, sortedPool[0][0] as SpiritType);
               return (
                 <motion.div
@@ -216,8 +222,8 @@ const ObservationPage = () => {
                     <SpiritAvatar spirit={spirit} size="small" className="w-7 h-7" />
                   </div>
                   <div
-                    className="flex-1 rounded-xl px-3 py-2 text-sm font-hei text-amber-light/80 leading-relaxed"
-                    style={{ backgroundColor: `${spirit.color}10` }}
+                    className="flex-1 journal-card px-3 py-2 text-sm font-hei text-journal-text/90 leading-relaxed"
+                    style={{ borderLeft: `3px solid ${spirit.color}` }}
                   >
                     <span className="text-xs block mb-1" style={{ color: spirit.color }}>
                       {comment.speaker}
@@ -232,14 +238,14 @@ const ObservationPage = () => {
 
         {/* 列3：灵居共鸣图 */}
         <motion.div
-          className="card p-4 h-full overflow-hidden flex flex-col"
+          className="journal-card p-4 h-full overflow-hidden flex flex-col"
           initial={{ opacity: 0, x: 20 }}
           animate={{ opacity: 1, x: 0 }}
           transition={{ delay: 0.35 }}
         >
           <div className="flex items-center gap-2 mb-3">
-            <Map className="w-4 h-4 text-amber-gold shrink-0" />
-            <h3 className="text-base font-song font-bold text-amber-light">灵居共鸣图</h3>
+            <Map className="w-4 h-4 text-journal-accent shrink-0" />
+            <h3 className="text-base font-song font-bold text-journal-text">灵居共鸣图</h3>
           </div>
           <div className="space-y-2 flex-1">
             {observationRecord.resonanceZones.map((zone, index) => {
@@ -253,7 +259,7 @@ const ObservationPage = () => {
                   transition={{ delay: 0.4 + index * 0.05 }}
                 >
                   <div className="flex items-center justify-between gap-2">
-                    <span className="text-xs font-song font-bold text-amber-light shrink-0">
+                    <span className="text-xs font-song font-bold text-journal-text shrink-0">
                       {zone.name}
                     </span>
                     <span
@@ -265,11 +271,11 @@ const ObservationPage = () => {
                     >
                       {zone.guardian}
                     </span>
-                    <span className="text-[10px] text-amber-gold tabular-nums shrink-0">
+                    <span className="text-[10px] text-journal-accent tabular-nums shrink-0">
                       {zone.value}
                     </span>
                   </div>
-                  <div className="h-1 rounded-full bg-ink-blue/50 overflow-hidden">
+                  <div className="h-1 rounded-full bg-journal-secondary overflow-hidden">
                     <div
                       className="h-full rounded-full transition-all"
                       style={{
@@ -278,7 +284,7 @@ const ObservationPage = () => {
                       }}
                     />
                   </div>
-                  <p className="text-[10px] text-amber-light/60 font-hei truncate">{zone.desc}</p>
+                  <p className="text-[10px] text-journal-muted font-hei truncate">{zone.desc}</p>
                 </motion.div>
               );
             })}
@@ -292,20 +298,20 @@ const ObservationPage = () => {
         animate={{ opacity: 1 }}
         transition={{ delay: 0.4 }}
       >
-        <motion.div className="card">
-          <h4 className="text-base font-song font-bold text-amber-light mb-3">
+        <motion.div className="journal-card p-4">
+          <h4 className="text-base font-song font-bold text-journal-text mb-3">
             科学收纳建议
           </h4>
           <ul className="space-y-2">
             {observationRecord.scientificAdvice.map((advice, index) => (
               <motion.li
                 key={index}
-                className="flex items-start gap-2 text-sm text-amber-light/70 font-hei"
+                className="flex items-start gap-2 text-sm text-journal-muted font-hei"
                 initial={{ opacity: 0, x: -10 }}
                 animate={{ opacity: 1, x: 0 }}
                 transition={{ delay: 0.5 + index * 0.1 }}
               >
-                <span className="w-5 h-5 rounded-full bg-amber-gold/20 flex items-center justify-center text-xs text-amber-gold">
+                <span className="w-5 h-5 rounded-full bg-journal-secondary flex items-center justify-center text-xs text-journal-accent">
                   {index + 1}
                 </span>
                 {advice}
@@ -315,8 +321,8 @@ const ObservationPage = () => {
         </motion.div>
 
         <motion.div
-          className="card"
-          style={{ borderColor: `${topSpirit.color}20` }}
+          className="journal-card p-4"
+          style={{ borderColor: `${topSpirit.color}40` }}
         >
           <h4 className="text-base font-song font-bold mb-3" style={{ color: topSpirit.color }}>
             灵居气息建议
@@ -325,7 +331,7 @@ const ObservationPage = () => {
             {observationRecord.spiritAdvice.map((advice, index) => (
               <motion.li
                 key={index}
-                className="flex items-start gap-2 text-sm text-amber-light/70 font-hei"
+                className="flex items-start gap-2 text-sm text-journal-muted font-hei"
                 initial={{ opacity: 0, x: -10 }}
                 animate={{ opacity: 1, x: 0 }}
                 transition={{ delay: 0.6 + index * 0.1 }}
@@ -354,8 +360,8 @@ const ObservationPage = () => {
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
         >
-          <p className="text-amber-light/70 font-hei text-sm mb-2">{resultError}</p>
-          <button onClick={handleRetryResult} className="text-sm text-amber-gold hover:underline">
+          <p className="text-journal-muted font-hei text-sm mb-2">{resultError}</p>
+          <button onClick={handleRetryResult} className="text-sm text-journal-accent hover:underline">
             重新生成结果页文案
           </button>
         </motion.div>
@@ -380,7 +386,7 @@ const ObservationPage = () => {
         <motion.button
           onClick={handleGenerateResult}
           disabled={!resultReady}
-          className="btn-primary flex items-center gap-2 glow-amber disabled:opacity-50 disabled:cursor-not-allowed"
+          className="btn-primary flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
           whileHover={resultReady ? { scale: 1.05 } : undefined}
           whileTap={resultReady ? { scale: 0.95 } : undefined}
         >
@@ -405,7 +411,7 @@ const ObservationPage = () => {
       </motion.div>
 
       <motion.div
-        className="text-center mt-8 text-sm text-amber-light/50"
+        className="text-center mt-8 text-sm text-journal-muted/70"
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         transition={{ delay: 0.8 }}
@@ -419,6 +425,7 @@ const ObservationPage = () => {
         </p>
       </motion.div>
     </motion.div>
+    </PageShell>
   );
 };
 

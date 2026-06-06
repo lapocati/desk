@@ -12,7 +12,9 @@ import {
 } from 'lucide-react';
 import { useAppStore } from '@/store';
 import { SPIRITS } from '@/constants';
-import SpiritAvatar from '@/components/SpiritAvatar';
+import PageShell from '@/components/PageShell';
+import MemoryArchiveCard from '@/components/MemoryArchiveCard';
+import { PaperClip, WashiTape } from '@/components/ScrapbookDecor';
 import { analyzeFriendForPk } from '@/utils/analyzeFriendForPk';
 import { mapFinalResultToPkInput } from '@/utils/mapFinalResultToPkInput';
 import { getPkRelationship } from '@/services/pkRelationshipApi';
@@ -163,258 +165,231 @@ const ComparePage = () => {
   const friendSpirit = friendResult ? SPIRITS[friendResult.primarySpirit] : null;
 
   return (
-    <motion.div
-      className="min-h-screen flex flex-col items-center px-4 py-8"
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      exit={{ opacity: 0 }}
-    >
+    <PageShell ambience="celebration" bgClass="from-archive-bg to-journal-secondary">
       <motion.div
-        className="text-center mb-8"
-        initial={{ opacity: 0, y: -20 }}
-        animate={{ opacity: 1, y: 0 }}
+        className="min-h-screen flex flex-col items-center px-4 py-8"
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        exit={{ opacity: 0 }}
       >
-        <h2 className="text-3xl font-song font-bold text-gradient mb-2">
-          守护灵PK
-        </h2>
-        <p className="text-amber-light/70 font-hei">
-          {showUpload ? '上传好友的桌面照片，看看守护灵们的相处预测' : '看看你们的守护灵相处预测'}
-        </p>
-      </motion.div>
-
-      {showUpload && (
-        <>
-          <motion.div
-            className={`w-full max-w-xl aspect-video rounded-3xl border-2 transition-all duration-300 ${
-              isDragging
-                ? 'border-amber-gold bg-amber-gold/10'
-                : 'border-amber-gold/30 bg-ink-light/30'
-            } backdrop-blur-sm flex flex-col items-center justify-center cursor-pointer relative overflow-hidden`}
-            onDrop={handleDrop}
-            onDragOver={(e) => {
-              e.preventDefault();
-              setIsDragging(true);
-            }}
-            onDragLeave={() => setIsDragging(false)}
-            onClick={() => fileInputRef.current?.click()}
-            whileHover={{ scale: 1.02 }}
-            initial={{ opacity: 0, scale: 0.9 }}
-            animate={{ opacity: 1, scale: 1 }}
-          >
-            {previewUrl ? (
-              <img
-                src={previewUrl}
-                alt="好友桌面预览"
-                className="w-full h-full object-cover rounded-3xl"
-              />
-            ) : (
-              <div className="flex flex-col items-center gap-4">
-                <Upload className="w-12 h-12 text-amber-gold" />
-                <p className="text-amber-light/70 font-hei">点击上传或拖拽图片到这里</p>
-                <p className="text-xs text-amber-light/50 font-hei flex items-center gap-1">
-                  <Camera className="w-3 h-3" />
-                  手机端可直接拍摄
-                </p>
-              </div>
-            )}
-            <input
-              ref={fileInputRef}
-              type="file"
-              accept="image/*"
-              capture="environment"
-              onChange={(e) => {
-                const file = e.target.files?.[0];
-                if (file) handleFileSelect(file);
-              }}
-              className="hidden"
-            />
-          </motion.div>
-
-          {friendAnalysisError && (
-            <p className="mt-4 text-sm text-red-400 font-hei">{friendAnalysisError}</p>
-          )}
-
-          <motion.div className="flex gap-4 mt-8">
-            <button onClick={() => navigate('/result')} className="btn-secondary">
-              返回结果
-            </button>
-            <motion.button
-              onClick={handleConfirmUpload}
-              disabled={!previewUrl}
-              className={`btn-primary flex items-center gap-2 ${!previewUrl ? 'opacity-50 cursor-not-allowed' : ''}`}
-              whileHover={previewUrl ? { scale: 1.05 } : {}}
-              whileTap={previewUrl ? { scale: 0.95 } : {}}
-            >
-              <span>开始分析</span>
-              <ArrowRight className="w-5 h-5" />
-            </motion.button>
-          </motion.div>
-        </>
-      )}
-
-      {showAnalyzing && (
         <motion.div
-          className="flex flex-col items-center gap-6"
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
+          className="text-center mb-8"
+          initial={{ opacity: 0, y: -20 }}
+          animate={{ opacity: 1, y: 0 }}
         >
-          <Loader2 className="w-12 h-12 text-amber-gold animate-spin" />
-          <p className="text-amber-light/80 font-hei">{loadingMsg}</p>
-        </motion.div>
-      )}
-
-      {showPkRetry && friendSpirit && (
-        <motion.div className="flex flex-col items-center gap-6" initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
-          <p className="text-amber-light/80 font-hei text-sm">灵宠走神了，再试一次吧</p>
-          <p className="text-amber-light/70 font-hei text-sm">
-            好友守护灵已识别：{friendSpirit.name}（共鸣度 {friendResult!.primaryResonance}%）
+          <h2 className="text-3xl font-song font-bold text-gradient-warm mb-2">
+            守护灵PK
+          </h2>
+          <p className="text-journal-muted font-hei">
+            {showUpload ? '上传好友的桌面照片，看看守护灵们的相处预测' : '看看你们的守护灵相处预测'}
           </p>
-          <div className="flex gap-4">
-            <motion.button onClick={handleRetryPkOnly} className="btn-primary flex items-center gap-2">
-              <RefreshCw className="w-4 h-4" />
-              <span>再试一次</span>
-            </motion.button>
-            <motion.button onClick={handleChangeFriendPhoto} className="btn-secondary">
-              换一张好友照片
-            </motion.button>
-          </div>
         </motion.div>
-      )}
 
-      {showResult && friendSpirit && pkRelationship && (
-        <>
-          <motion.div
-            className="w-full max-w-2xl flex items-start justify-center gap-4 mb-8"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ delay: 0.3 }}
-          >
+        {showUpload && (
+          <>
             <motion.div
-              className="spirit-card flex flex-col items-center flex-1 max-w-xs"
-              initial={{ opacity: 0, x: -20 }}
-              animate={{ opacity: 1, x: 0 }}
-              style={{ borderColor: `${primarySpirit.color}30` }}
-            >
-              <motion.div
-                className="mb-4"
-                animate={{ y: [0, -5, 0] }}
-                transition={{ duration: 2, repeat: Infinity }}
-              >
-                <SpiritAvatar spirit={primarySpirit} size="large" className="w-32 h-32 md:w-36 md:h-36" />
-              </motion.div>
-              <h3 className="text-xl font-song font-bold mb-2" style={{ color: primarySpirit.color }}>
-                {primarySpirit.name}
-              </h3>
-              <p className="text-sm text-amber-light/70 mb-2">
-                共鸣度 {finalResult.primaryResonance}%
-              </p>
-              <div className="px-3 py-1 rounded-full bg-amber-gold/20 border border-amber-gold/50">
-                <span className="text-xs text-amber-gold">{finalResult.personalityTag}</span>
-              </div>
-              <p className="mt-2 text-xs text-amber-light/50">你</p>
-            </motion.div>
-
-            <motion.div
-              className="flex shrink-0 items-center justify-center mt-14 pointer-events-none"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1, rotate: [0, 360] }}
-              transition={{
-                opacity: { duration: 0.3 },
-                rotate: { duration: 3, repeat: Infinity, ease: 'linear' },
+              className={`w-full max-w-xl aspect-video rounded-2xl border-2 border-dashed transition-all duration-300 relative ${
+                isDragging
+                  ? 'border-journal-accent bg-journal-secondary'
+                  : 'border-journal-border bg-journal-card'
+              } flex flex-col items-center justify-center cursor-pointer overflow-hidden`}
+              onDrop={handleDrop}
+              onDragOver={(e) => {
+                e.preventDefault();
+                setIsDragging(true);
               }}
+              onDragLeave={() => setIsDragging(false)}
+              onClick={() => fileInputRef.current?.click()}
+              whileHover={{ scale: 1.02 }}
+              initial={{ opacity: 0, scale: 0.9 }}
+              animate={{ opacity: 1, scale: 1 }}
             >
-              <Sparkles className="w-8 h-8 text-spirit-purple" />
+              <WashiTape className="-top-2 left-6" />
+              {previewUrl ? (
+                <img src={previewUrl} alt="好友桌面预览" className="w-full h-full object-cover" />
+              ) : (
+                <div className="flex flex-col items-center gap-4">
+                  <Upload className="w-12 h-12 text-journal-accent" />
+                  <p className="text-journal-muted font-hei">点击上传或拖拽图片到这里</p>
+                  <p className="text-xs text-journal-muted/70 font-hei flex items-center gap-1">
+                    <Camera className="w-3 h-3" />
+                    手机端可直接拍摄
+                  </p>
+                </div>
+              )}
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept="image/*"
+                capture="environment"
+                onChange={(e) => {
+                  const file = e.target.files?.[0];
+                  if (file) handleFileSelect(file);
+                }}
+                className="hidden"
+              />
             </motion.div>
 
-            <motion.div
-              className="spirit-card flex flex-col items-center flex-1 max-w-xs"
-              initial={{ opacity: 0, x: 20 }}
-              animate={{ opacity: 1, x: 0 }}
-              style={{ borderColor: `${friendSpirit.color}30` }}
-            >
-              <motion.div
-                className="mb-4"
-                animate={{ y: [0, -5, 0] }}
-                transition={{ duration: 2, repeat: Infinity, delay: 0.5 }}
+            {friendAnalysisError && (
+              <p className="mt-4 text-sm text-red-500 font-hei">{friendAnalysisError}</p>
+            )}
+
+            <motion.div className="flex gap-4 mt-8">
+              <button onClick={() => navigate('/result')} className="btn-secondary">
+                返回结果
+              </button>
+              <motion.button
+                onClick={handleConfirmUpload}
+                disabled={!previewUrl}
+                className={`btn-primary flex items-center gap-2 ${!previewUrl ? 'opacity-50 cursor-not-allowed' : ''}`}
+                whileHover={previewUrl ? { scale: 1.05 } : {}}
+                whileTap={previewUrl ? { scale: 0.95 } : {}}
               >
-                <SpiritAvatar spirit={friendSpirit} size="large" className="w-32 h-32 md:w-36 md:h-36" />
-              </motion.div>
-              <h3 className="text-xl font-song font-bold mb-2" style={{ color: friendSpirit.color }}>
-                {friendSpirit.name}
-              </h3>
-              <p className="text-sm text-amber-light/70 mb-2">
-                共鸣度 {friendResult.primaryResonance}%
-              </p>
-              <div className="px-3 py-1 rounded-full bg-amber-gold/20 border border-amber-gold/50">
-                <span className="text-xs text-amber-gold">{friendResult.personalityTag}</span>
-              </div>
-              <p className="mt-2 text-xs text-amber-light/50">好友</p>
+                <span>开始分析</span>
+                <ArrowRight className="w-5 h-5" />
+              </motion.button>
             </motion.div>
-          </motion.div>
+          </>
+        )}
 
-          <motion.div
-            className="card max-w-md text-center mb-6"
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-          >
-            <h4 className="text-lg font-song font-bold text-amber-light mb-4">共鸣纽带</h4>
-            <p className="text-lg font-song text-amber-gold italic">"{pkRelationship.bond}"</p>
+        {showAnalyzing && (
+          <motion.div className="flex flex-col items-center gap-6" initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
+            <Loader2 className="w-12 h-12 text-journal-accent animate-spin" />
+            <p className="text-journal-text font-hei">{loadingMsg}</p>
           </motion.div>
+        )}
 
-          <motion.div
-            className="card max-w-md text-center mb-8"
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.1 }}
-          >
-            <h4 className="text-lg font-song font-bold text-amber-light mb-4">相处预测</h4>
-            <div className="space-y-3">
-              {pkRelationship.scenarios.map((scenario, index) => (
-                <motion.p
-                  key={index}
-                  className="text-base font-song text-amber-light/90"
-                  initial={{ opacity: 0, x: -10 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  transition={{ delay: 0.2 + index * 0.1 }}
-                >
-                  {scenario}
-                </motion.p>
-              ))}
+        {showPkRetry && friendSpirit && (
+          <motion.div className="flex flex-col items-center gap-6" initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
+            <p className="text-journal-text font-hei text-sm">灵宠走神了，再试一次吧</p>
+            <p className="text-journal-muted font-hei text-sm">
+              好友守护灵已识别：{friendSpirit.name}（共鸣度 {friendResult!.primaryResonance}%）
+            </p>
+            <div className="flex gap-4">
+              <motion.button onClick={handleRetryPkOnly} className="btn-primary flex items-center gap-2">
+                <RefreshCw className="w-4 h-4" />
+                <span>再试一次</span>
+              </motion.button>
+              <motion.button onClick={handleChangeFriendPhoto} className="btn-secondary">
+                换一张好友照片
+              </motion.button>
             </div>
           </motion.div>
+        )}
 
-          <motion.div className="flex flex-wrap gap-4 justify-center">
-            <motion.button
-              onClick={handleChangeFriendPhoto}
-              className="btn-secondary flex items-center gap-2"
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
+        {showResult && friendSpirit && pkRelationship && (
+          <>
+            <motion.div
+              className="w-full max-w-3xl flex items-start justify-center gap-4 mb-8"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ delay: 0.3 }}
             >
-              <RefreshCw className="w-4 h-4" />
-              <span>换一张好友照片</span>
-            </motion.button>
-            <motion.button
-              onClick={() => navigate('/result')}
-              className="btn-secondary flex items-center gap-2"
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
-            >
-              <ArrowLeft className="w-4 h-4" />
-              <span>返回结果</span>
-            </motion.button>
-            <motion.button
-              onClick={() => navigate('/')}
-              className="btn-primary flex items-center gap-2 glow-amber"
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
-            >
-              <span>重新开始</span>
-            </motion.button>
-          </motion.div>
-        </>
-      )}
+              <motion.div
+                className="flex-1 max-w-xs"
+                initial={{ opacity: 0, x: -20 }}
+                animate={{ opacity: 1, x: 0 }}
+              >
+                <MemoryArchiveCard
+                  compact
+                  finalResult={finalResult}
+                  spirit={primarySpirit}
+                  resonance={finalResult.primaryResonance}
+                  personalityTag={finalResult.personalityTag}
+                  label="你"
+                />
+              </motion.div>
 
-    </motion.div>
+              <motion.div
+                className="flex shrink-0 items-center justify-center mt-14"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+              >
+                <PaperClip />
+                <span className="text-lg font-song text-journal-muted mx-1">VS</span>
+                <PaperClip />
+              </motion.div>
+
+              <motion.div
+                className="flex-1 max-w-xs"
+                initial={{ opacity: 0, x: 20 }}
+                animate={{ opacity: 1, x: 0 }}
+              >
+                <MemoryArchiveCard
+                  compact
+                  finalResult={friendResult}
+                  spirit={friendSpirit}
+                  resonance={friendResult.primaryResonance}
+                  personalityTag={friendResult.personalityTag}
+                  label="好友"
+                />
+              </motion.div>
+            </motion.div>
+
+            <motion.div
+              className="journal-card max-w-md text-center mb-6"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+            >
+              <h4 className="text-lg font-song font-bold text-journal-text mb-4">共鸣纽带</h4>
+              <p className="text-lg font-song text-journal-accent italic">「{pkRelationship.bond}」</p>
+            </motion.div>
+
+            <motion.div
+              className="journal-card max-w-md text-center mb-8"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.1 }}
+            >
+              <h4 className="text-lg font-song font-bold text-journal-text mb-4">相处预测</h4>
+              <div className="space-y-3">
+                {pkRelationship.scenarios.map((scenario, index) => (
+                  <motion.p
+                    key={index}
+                    className="text-base font-song text-journal-text/90"
+                    initial={{ opacity: 0, x: -10 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ delay: 0.2 + index * 0.1 }}
+                  >
+                    {scenario}
+                  </motion.p>
+                ))}
+              </div>
+            </motion.div>
+
+            <motion.div className="flex flex-wrap gap-4 justify-center">
+              <motion.button
+                onClick={handleChangeFriendPhoto}
+                className="btn-secondary flex items-center gap-2"
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+              >
+                <RefreshCw className="w-4 h-4" />
+                <span>换一张好友照片</span>
+              </motion.button>
+              <motion.button
+                onClick={() => navigate('/result')}
+                className="btn-secondary flex items-center gap-2"
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+              >
+                <ArrowLeft className="w-4 h-4" />
+                <span>返回结果</span>
+              </motion.button>
+              <motion.button
+                onClick={() => navigate('/')}
+                className="btn-primary flex items-center gap-2"
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+              >
+                <Sparkles className="w-4 h-4" />
+                <span>重新开始</span>
+              </motion.button>
+            </motion.div>
+          </>
+        )}
+      </motion.div>
+    </PageShell>
   );
 };
 

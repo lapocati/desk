@@ -4,38 +4,152 @@
 
 @layer base {
   body {
-    @apply bg-ink-blue text-amber-light font-hei;
+    background-color: #FAF7F0;
+    color: #5C4B3B;
+    @apply font-hei;
   }
 }
 
 @layer components {
   .btn-primary {
-    @apply px-8 py-4 rounded-full bg-gradient-to-r from-amber-gold to-amber-dark text-ink-blue font-song text-lg shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105;
+    @apply px-8 py-4 rounded-full font-song text-lg shadow-md hover:shadow-lg transition-all duration-300 hover:scale-105;
+    background-image: linear-gradient(to right, #E7B96A, #D4A574);
+    color: #5C4B3B;
   }
 
   .btn-secondary {
-    @apply px-6 py-3 rounded-full bg-ink-light text-amber-gold font-hei border border-amber-gold/30 hover:bg-amber-gold/10 transition-all duration-300;
+    @apply px-6 py-3 rounded-full font-hei transition-all duration-300;
+    background-color: #FFF8EE;
+    color: #5C4B3B;
+    border: 1px solid #E6D5B8;
+  }
+
+  .btn-secondary:hover {
+    background-color: #F6EAD8;
   }
 
   .card {
-    @apply bg-ink-light/50 backdrop-blur-sm rounded-2xl border border-amber-gold/20 p-6 shadow-xl;
+    @apply backdrop-blur-sm rounded-2xl p-6;
+    background-color: #FFF8EE;
+    border: 1px solid #E6D5B8;
+    box-shadow: 2px 3px 12px rgba(92, 75, 59, 0.08);
   }
 
   .spirit-card {
-    @apply bg-gradient-to-br from-ink-light to-ink-blue rounded-3xl border border-amber-gold/30 p-8 shadow-2xl;
+    @apply rounded-3xl p-8;
+    background-image: linear-gradient(to bottom right, #FFF8EE, #F6EAD8);
+    border: 1px solid #E6D5B8;
+    box-shadow: 3px 4px 16px rgba(92, 75, 59, 0.1);
+  }
+
+  .journal-card {
+    @apply rounded-xl;
+    background-color: #FFF8EE;
+    border: 1px solid #E6D5B8;
+    box-shadow: 2px 3px 8px rgba(92, 75, 59, 0.08);
+  }
+
+  .journal-card-tilt {
+    @apply rounded-xl -rotate-[0.5deg];
+    background-color: #FFF8EE;
+    border: 1px solid #E6D5B8;
+    box-shadow: 2px 3px 8px rgba(92, 75, 59, 0.08);
+  }
+
+  .archive-card {
+    @apply rounded-2xl;
+    background-color: #FFF5E6;
+    border: 1px solid #E6D5B8;
+    box-shadow: 4px 6px 20px rgba(92, 75, 59, 0.12);
+  }
+
+  .paper-texture {
+    background-image:
+      repeating-linear-gradient(
+        transparent,
+        transparent 27px,
+        rgba(230, 213, 184, 0.4) 27px,
+        rgba(230, 213, 184, 0.4) 28px
+      );
   }
 
   .text-gradient {
-    @apply bg-gradient-to-r from-amber-gold via-amber-light to-amber-gold bg-clip-text text-transparent;
+    @apply bg-clip-text text-transparent;
+    background-image: linear-gradient(to right, #E7B96A, #D4A574, #E7B96A);
+  }
+
+  .text-gradient-warm {
+    @apply bg-clip-text text-transparent;
+    background-image: linear-gradient(to right, #B8956A, #E7B96A, #D4A574);
   }
 }
 
 @layer utilities {
+  .ambience-base-focus,
+  .ambience-base-entrance {
+    background-image: linear-gradient(to bottom right, #FAF7F0, #FFF8EE, #F6EAD8);
+  }
+
+  .ambience-base-celebration {
+    background-image: linear-gradient(to bottom right, #F3EBDC, #F6EAD8, #E8DCC8);
+  }
+
+  .ambience-warm-glow {
+    background: radial-gradient(ellipse at 20% 0%, rgba(231, 185, 106, 0.12) 0%, transparent 55%);
+  }
+
+  .ambience-shelf-glow {
+    background: radial-gradient(ellipse at 50% 100%, rgba(212, 165, 116, 0.1) 0%, transparent 50%);
+  }
+
+  .ambience-paper-texture {
+    background-image:
+      repeating-linear-gradient(
+        transparent,
+        transparent 27px,
+        rgba(230, 213, 184, 0.35) 27px,
+        rgba(230, 213, 184, 0.35) 28px
+      );
+    background-size: 100% 28px;
+    opacity: 0.3;
+  }
+
+  .ambience-wood-grain {
+    background-image:
+      repeating-linear-gradient(
+        90deg,
+        transparent,
+        transparent 3px,
+        rgba(212, 165, 116, 0.06) 3px,
+        rgba(212, 165, 116, 0.06) 4px
+      ),
+      repeating-linear-gradient(
+        0deg,
+        transparent,
+        transparent 8px,
+        rgba(232, 220, 200, 0.08) 8px,
+        rgba(232, 220, 200, 0.08) 9px
+      );
+  }
+
+  .ambience-sun-shaft {
+    background: linear-gradient(115deg, rgba(231, 185, 106, 0.08) 0%, transparent 42%);
+  }
+
+  .ambience-showcase-glow {
+    background: radial-gradient(ellipse at 50% 45%, rgba(231, 185, 106, 0.12) 0%, transparent 55%);
+  }
+
   .glow-amber {
-    box-shadow: 0 0 20px rgba(212, 165, 116, 0.3), 0 0 40px rgba(212, 165, 116, 0.1);
+    box-shadow: 0 2px 12px rgba(231, 185, 106, 0.25), 0 4px 20px rgba(212, 165, 116, 0.12);
   }
 
   .glow-spirit {
-    box-shadow: 0 0 30px rgba(139, 92, 246, 0.2), 0 0 60px rgba(139, 92, 246, 0.1);
+    box-shadow: 0 2px 12px rgba(92, 75, 59, 0.1), 0 4px 16px rgba(231, 185, 106, 0.15);
+  }
+
+  .glow-spirit-dynamic {
+    box-shadow: 0 2px 12px color-mix(in srgb, var(--spirit-color, #E7B96A) 20%, transparent),
+                0 4px 16px color-mix(in srgb, var(--spirit-color, #E7B96A) 10%, transparent);
   }
 }
