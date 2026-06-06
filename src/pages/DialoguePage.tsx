@@ -24,6 +24,7 @@ const DialoguePage = () => {
   const round1Initialized = useRef(false);
   const pendingNavStartRef = useRef(0);
   const observationNavTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const messagesEndRef = useRef<HTMLDivElement>(null);
 
   const dialogueHistory = useAppStore((state) => state.dialogueHistory);
   const addDialogueMessage = useAppStore((state) => state.addDialogueMessage);
@@ -133,6 +134,13 @@ const DialoguePage = () => {
 
     initRound1();
   }, [currentRound, dialogueHistory.length, visualAnalysis, hiddenSoulPool, addDialogueMessage, setCurrentSpeaker, updateSoulPool]);
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    }, 50);
+    return () => clearTimeout(timer);
+  }, [dialogueHistory, isFetching, isPendingObservationNav, fetchError]);
 
   const handleSend = async () => {
     if (!userInput.trim() || !currentSpeaker || isFetching || isPendingObservationNav) return;
@@ -330,6 +338,7 @@ const DialoguePage = () => {
                   </button>
                 </div>
               )}
+              <div ref={messagesEndRef} />
             </div>
           </div>
         </div>
@@ -350,7 +359,7 @@ const DialoguePage = () => {
                   value={userInput}
                   onChange={(e) => setUserInput(e.target.value)}
                   onKeyDown={handleKeyDown}
-                  placeholder="简短回答即可（是/否/一句话）"
+                  placeholder="简短回答即可"
                   className="flex-1 px-4 py-3 rounded-lg bg-journal-bg paper-texture text-journal-text placeholder:text-journal-muted/60 border border-journal-border focus:border-journal-accent focus:outline-none transition-all font-hei"
                   disabled={isFetching || isPendingObservationNav}
                 />

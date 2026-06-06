@@ -14,7 +14,7 @@ import { useAppStore } from '@/store';
 import { SPIRITS } from '@/constants';
 import PageShell from '@/components/PageShell';
 import MemoryArchiveCard from '@/components/MemoryArchiveCard';
-import { PaperClip, WashiTape } from '@/components/ScrapbookDecor';
+import { WashiTape } from '@/components/ScrapbookDecor';
 import { analyzeFriendForPk } from '@/utils/analyzeFriendForPk';
 import { mapFinalResultToPkInput } from '@/utils/mapFinalResultToPkInput';
 import { getPkRelationship } from '@/services/pkRelationshipApi';
@@ -279,83 +279,85 @@ const ComparePage = () => {
 
         {showResult && friendSpirit && pkRelationship && (
           <>
-            <motion.div
-              className="w-full max-w-3xl flex items-start justify-center gap-4 mb-8"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ delay: 0.3 }}
-            >
+            <div className="w-full max-w-md mx-auto flex flex-col gap-8 mb-8">
               <motion.div
-                className="flex-1 max-w-xs"
-                initial={{ opacity: 0, x: -20 }}
-                animate={{ opacity: 1, x: 0 }}
-              >
-                <MemoryArchiveCard
-                  compact
-                  finalResult={finalResult}
-                  spirit={primarySpirit}
-                  resonance={finalResult.primaryResonance}
-                  personalityTag={finalResult.personalityTag}
-                  label="你"
-                />
-              </motion.div>
-
-              <motion.div
-                className="flex shrink-0 items-center justify-center mt-14"
+                className="grid grid-cols-[1fr_auto_1fr] items-center gap-2"
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
+                transition={{ delay: 0.3 }}
               >
-                <PaperClip />
-                <span className="text-lg font-song text-journal-muted mx-1">VS</span>
-                <PaperClip />
+                <motion.div
+                  className="w-full"
+                  initial={{ opacity: 0, x: -20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                >
+                  <MemoryArchiveCard
+                    compact
+                    finalResult={finalResult}
+                    spirit={primarySpirit}
+                    resonance={finalResult.primaryResonance}
+                    personalityTag={finalResult.personalityTag}
+                    label="你"
+                  />
+                </motion.div>
+
+                <motion.span
+                  className="text-lg font-song text-journal-muted px-1 shrink-0"
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                >
+                  VS
+                </motion.span>
+
+                <motion.div
+                  className="w-full"
+                  initial={{ opacity: 0, x: 20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                >
+                  <MemoryArchiveCard
+                    compact
+                    finalResult={friendResult}
+                    spirit={friendSpirit}
+                    resonance={friendResult.primaryResonance}
+                    personalityTag={friendResult.personalityTag}
+                    label="好友"
+                  />
+                </motion.div>
               </motion.div>
 
-              <motion.div
-                className="flex-1 max-w-xs"
-                initial={{ opacity: 0, x: 20 }}
-                animate={{ opacity: 1, x: 0 }}
-              >
-                <MemoryArchiveCard
-                  compact
-                  finalResult={friendResult}
-                  spirit={friendSpirit}
-                  resonance={friendResult.primaryResonance}
-                  personalityTag={friendResult.personalityTag}
-                  label="好友"
-                />
-              </motion.div>
-            </motion.div>
+              <div className="flex flex-col gap-6">
+                <motion.div
+                  className="journal-card w-full p-5 text-center"
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                >
+                  <h4 className="text-lg font-song font-bold text-journal-text mb-4">共鸣纽带</h4>
+                  <p className="text-lg font-song text-journal-accent italic">「{pkRelationship.bond}」</p>
+                </motion.div>
 
-            <motion.div
-              className="journal-card max-w-md text-center mb-6"
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-            >
-              <h4 className="text-lg font-song font-bold text-journal-text mb-4">共鸣纽带</h4>
-              <p className="text-lg font-song text-journal-accent italic">「{pkRelationship.bond}」</p>
-            </motion.div>
-
-            <motion.div
-              className="journal-card max-w-md text-center mb-8"
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.1 }}
-            >
-              <h4 className="text-lg font-song font-bold text-journal-text mb-4">相处预测</h4>
-              <div className="space-y-3">
-                {pkRelationship.scenarios.map((scenario, index) => (
-                  <motion.p
-                    key={index}
-                    className="text-base font-song text-journal-text/90"
-                    initial={{ opacity: 0, x: -10 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    transition={{ delay: 0.2 + index * 0.1 }}
-                  >
-                    {scenario}
-                  </motion.p>
-                ))}
+                <motion.div
+                  className="journal-card w-full p-5 text-center"
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.1 }}
+                >
+                  <h4 className="text-lg font-song font-bold text-journal-text mb-4">相处预测</h4>
+                  <div className="space-y-3">
+                    {pkRelationship.scenarios.map((scenario, index) => (
+                      <motion.p
+                        key={index}
+                        className="text-base font-song text-journal-text/90"
+                        initial={{ opacity: 0, x: -10 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        transition={{ delay: 0.2 + index * 0.1 }}
+                      >
+                        {scenario}
+                      </motion.p>
+                    ))}
+                  </div>
+                </motion.div>
               </div>
-            </motion.div>
+            </div>
 
             <motion.div className="flex flex-wrap gap-4 justify-center">
               <motion.button

@@ -127,66 +127,66 @@ const LoadingPage = () => {
         animate={{ opacity: 1 }}
         exit={{ opacity: 0 }}
       >
-        {/* Spirit stamps peeking from edges */}
-        <motion.div
-          className="absolute inset-0 flex items-center justify-center"
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ delay: 0.5 }}
-        >
-          <div className="relative w-80 h-80">
-            {spiritList.map((spirit, index) => {
-              const angle = index * 72 * (Math.PI / 180);
-              const radius = 120;
-              const x = Math.cos(angle) * radius;
-              const y = Math.sin(angle) * radius;
-
-              return (
-                <motion.div
-                  key={spirit.type}
-                  className="absolute"
-                  style={{ left: '50%', top: '50%', transform: 'translate(-50%, -50%)' }}
-                  initial={{ x: 0, y: 0, opacity: 0, scale: 0 }}
-                  animate={{
-                    x: [0, x, x, 0],
-                    y: [0, y, y, 0],
-                    opacity: [0, 1, 1, 0.5],
-                    scale: [0, 1, 1, 0.8],
-                  }}
-                  transition={{
-                    duration: 6,
-                    repeat: Infinity,
-                    delay: index * 0.3,
-                    ease: 'easeInOut',
-                  }}
-                >
-                  <div
-                    className="w-14 h-14 rounded-full flex items-center justify-center journal-card"
-                    style={{
-                      backgroundColor: `${spirit.color}12`,
-                      border: `2px solid ${spirit.color}`,
-                    }}
-                  >
-                    <SpiritAvatar spirit={spirit} size="small" className="w-12 h-12" />
-                  </div>
-                </motion.div>
-              );
-            })}
-          </div>
-        </motion.div>
-
-        {/* Polaroid photo preview */}
+        {/* Polaroid + spirit orbit anchored at photo content center */}
         {photoUrl && (
-          <motion.div
-            className="relative z-10 bg-journal-card border border-journal-border p-2 shadow-md rotate-[-2deg]"
-            style={{ width: 140, height: 168 }}
-            initial={{ opacity: 0, scale: 0.5 }}
-            animate={{ opacity: 1, scale: 1 }}
-            transition={{ delay: 1 }}
-          >
-            <img src={photoUrl} alt="桌面" className="w-full h-[120px] object-cover" />
-            <p className="text-[10px] text-journal-muted text-center mt-1 font-song">桌面快照</p>
-          </motion.div>
+          <div className="relative" style={{ width: 140, height: 168 }}>
+            <motion.div
+              className="absolute left-1/2 pointer-events-none"
+              style={{
+                top: 68,
+                width: 240,
+                height: 240,
+                transform: 'translate(-50%, -50%)',
+                zIndex: 0,
+              }}
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ delay: 0.5 }}
+            >
+              <div className="relative w-full h-full">
+                {spiritList.map((spirit, index) => {
+                  const angle = index * 72 * (Math.PI / 180);
+                  const radius = 120;
+                  const x = Math.cos(angle) * radius;
+                  const y = Math.sin(angle) * radius;
+
+                  return (
+                    <motion.div
+                      key={spirit.type}
+                      className="absolute"
+                      style={{ left: '50%', top: '50%', transform: 'translate(-50%, -50%)' }}
+                      initial={{ x: 0, y: 0, opacity: 0, scale: 0 }}
+                      animate={{
+                        x: [0, x, x, 0],
+                        y: [0, y, y, 0],
+                        opacity: [0, 1, 1, 0.5],
+                        scale: [0, 1, 1, 0.8],
+                      }}
+                      transition={{
+                        duration: 6,
+                        repeat: Infinity,
+                        delay: index * 0.3,
+                        ease: 'easeInOut',
+                      }}
+                    >
+                      <SpiritAvatar spirit={spirit} size="small" className="w-12 h-12" />
+                    </motion.div>
+                  );
+                })}
+              </div>
+            </motion.div>
+
+            <motion.div
+              className="relative z-10 bg-journal-card border border-journal-border p-2 shadow-md rotate-[-2deg]"
+              style={{ width: 140, height: 168 }}
+              initial={{ opacity: 0, scale: 0.5 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ delay: 1 }}
+            >
+              <img src={photoUrl} alt="桌面" className="w-full h-[120px] object-cover" />
+              <p className="text-[10px] text-journal-muted text-center mt-1 font-song">桌面快照</p>
+            </motion.div>
+          </div>
         )}
 
         {/* Typed message on lined paper */}

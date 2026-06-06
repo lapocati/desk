@@ -3,7 +3,7 @@ import { motion } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 import { Download, Users, Share2 } from 'lucide-react';
 import { useAppStore } from '@/store';
-import { SPIRITS } from '@/constants';
+import { getSpiritBeastName } from '@/constants';
 import PageShell from '@/components/PageShell';
 import MemoryArchiveCard from '@/components/MemoryArchiveCard';
 
@@ -25,11 +25,11 @@ const ResultPage = () => {
   };
 
   const handleShare = () => {
-    const spirit = SPIRITS[finalResult.primarySpirit];
+    const beastName = getSpiritBeastName(finalResult.primarySpirit);
     if (navigator.share) {
       navigator.share({
         title: '灵瑞集·桌灵档案馆',
-        text: `我的守护灵是${spirit.name}，共鸣度${finalResult.primaryResonance}%！`,
+        text: `我的灵兽是${beastName}，共鸣度${finalResult.primaryResonance}%！`,
         url: window.location.href,
       });
     } else {

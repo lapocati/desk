@@ -1,4 +1,4 @@
-import type { SpiritInfo, PersonalityDefinition, SoulPool } from '@/types';
+import type { SpiritInfo, PersonalityDefinition, SoulPool, SpiritType } from '@/types';
 
 // 五灵宠配置
 export const SPIRITS: Record<string, SpiritInfo> = {
@@ -68,6 +68,18 @@ export const SPIRITS: Record<string, SpiritInfo> = {
     iconSmall: '/spirits/guardian-sm.png',
   },
 };
+
+export const SPIRIT_BEAST_NAMES: Record<SpiritType, string> = {
+  guardian: '辟邪',
+  vitality: '天禄',
+  fantasy: '九尾狐',
+  wisdom: '白泽',
+  healing: '玄龟',
+};
+
+export function getSpiritBeastName(type: SpiritType): string {
+  return SPIRIT_BEAST_NAMES[type];
+}
 
 // 主人格库（20个预设）
 export const PERSONALITIES: PersonalityDefinition[] = [

@@ -1,7 +1,7 @@
 import { motion } from 'framer-motion';
 import { Heart, Sparkles } from 'lucide-react';
 import type { FinalResult, SpiritInfo } from '@/types';
-import { SPIRITS } from '@/constants';
+import { SPIRITS, getSpiritBeastName } from '@/constants';
 import SpiritAvatar from './SpiritAvatar';
 import { BookmarkRibbon, PushPin, PaperClip } from './ScrapbookDecor';
 
@@ -70,10 +70,11 @@ const MemoryArchiveCard = ({
 }: MemoryArchiveCardProps) => {
   if (compact && compactSpirit) {
     return (
-      <div className="archive-card p-6 flex flex-col items-center text-center">
-        <SpiritAvatar spirit={compactSpirit} size="large" className="w-24 h-24 mb-3" />
+      <div className="archive-card relative w-full p-4 flex flex-col items-center text-center">
+        <PaperClip className="absolute -top-1 left-3 z-10" />
+        <SpiritAvatar spirit={compactSpirit} size="large" className="w-32 h-32 mb-3 !p-0" />
         <h3 className="text-lg font-song font-bold" style={{ color: compactSpirit.color }}>
-          {compactSpirit.name}
+          {getSpiritBeastName(compactSpirit.type)}
         </h3>
         <p className="text-xs text-journal-muted mb-1">{compactSpirit.title}</p>
         {resonance != null && (
@@ -101,18 +102,10 @@ const MemoryArchiveCard = ({
 
       {/* Hero section */}
       <div className="flex items-center gap-4 mb-6">
-        <div
-          className="w-20 h-20 rounded-full flex items-center justify-center shrink-0"
-          style={{
-            backgroundColor: `${primarySpirit.color}12`,
-            border: `2px solid ${primarySpirit.color}`,
-          }}
-        >
-          <SpiritAvatar spirit={primarySpirit} size="large" className="w-16 h-16" />
-        </div>
+        <SpiritAvatar spirit={primarySpirit} size="large" className="w-28 h-28 shrink-0 !p-0" />
         <div className="flex-1 min-w-0">
           <h2 className="text-2xl font-song font-bold" style={{ color: primarySpirit.color }}>
-            {primarySpirit.name}
+            {getSpiritBeastName(primarySpirit.type)}
           </h2>
           <p className="text-sm text-journal-muted font-hei">{primarySpirit.title}</p>
           <p className="text-xs text-journal-muted/80 font-hei mt-1 line-clamp-2">
@@ -160,14 +153,14 @@ const MemoryArchiveCard = ({
                 transition={{ delay: 0.3 + index * 0.1 }}
               >
                 <div
-                  className="w-14 h-16 bg-journal-card border border-journal-border shadow-sm p-1 flex flex-col items-center"
+                  className="w-16 h-[4.5rem] bg-journal-card border border-journal-border shadow-sm p-1 flex flex-col items-center"
                   style={{ transform: `rotate(${index === 0 ? -2 : index === 1 ? 1 : -1}deg)` }}
                 >
                   <span className="text-xs">{medals[index]}</span>
-                  <SpiritAvatar spirit={spirit} size="small" className="w-10 h-10" />
+                  <SpiritAvatar spirit={spirit} size="small" className="w-12 h-12 !p-0" />
                 </div>
                 <span className="text-xs font-song mt-1" style={{ color: spirit.color }}>
-                  {spirit.name}
+                  {getSpiritBeastName(spirit.type)}
                 </span>
                 <span className="text-[10px] text-journal-muted tabular-nums">{item.resonance}%</span>
               </motion.div>
