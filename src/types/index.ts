@@ -12,6 +12,8 @@ export interface SpiritInfo {
   languageStyle: string;
   color: string;
   emoji: string;
+  iconLarge?: string;
+  iconSmall?: string;
 }
 
 // 隐藏分池
@@ -76,10 +78,25 @@ export interface DialogueResponse {
   interjection?: Interjection;
 }
 
+// 灵宠吐槽
+export interface SpiritComment {
+  speaker: string;
+  quote: string;
+}
+
+// 灵居共鸣区域
+export interface ResonanceZone {
+  name: string;
+  value: number;
+  guardian: string;
+  desc: string;
+}
+
 // 观察记录
 export interface ObservationRecord {
-  evidenceChain: string;
-  spiritObservation: string;
+  discoveries: string[];
+  spiritComments: SpiritComment[];
+  resonanceZones: ResonanceZone[];
   scientificAdvice: string[];
   spiritAdvice: string[];
 }

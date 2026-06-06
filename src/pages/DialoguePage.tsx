@@ -4,17 +4,23 @@ import { useNavigate } from 'react-router-dom';
 import { Send, Sparkles, Loader2 } from 'lucide-react';
 import { useAppStore } from '@/store';
 import { SPIRITS } from '@/constants';
+import SpiritAvatar from '@/components/SpiritAvatar';
 import type { SpiritType } from '@/types';
 import { getDialogueResponse } from '@/services/deepseekApi';
 import type { DialogueMessage, SoulPool, VisualAnalysisResult } from '@/types';
 import { prefetchObservationAndResult } from '@/utils/prefetchOutcome';
+
+const OBSERVATION_NAV_DELAY_MS = 5000;
 
 const DialoguePage = () => {
   const navigate = useNavigate();
   const [userInput, setUserInput] = useState('');
   const [isFetching, setIsFetching] = useState(false);
   const [fetchError, setFetchError] = useState<string | null>(null);
+  const [isPendingObservationNav, setIsPendingObservationNav] = useState(false);
   const round1Initialized = useRef(false);
+  const pendingNavStartRef = useRef(0);
+  const observationNavTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const dialogueHistory = useAppStore((state) => state.dialogueHistory);
   const addDialogueMessage = useAppStore((state) => state.addDialogueMessage);
@@ -32,6 +38,9 @@ const DialoguePage = () => {
   const setFinalResult = useAppStore((state) => state.setFinalResult);
   const setIsGeneratingResult = useAppStore((state) => state.setIsGeneratingResult);
   const setResultError = useAppStore((state) => state.setResultError);
+  const observationRecord = useAppStore((state) => state.observationRecord);
+  const isGeneratingObservation = useAppStore((state) => state.isGeneratingObservation);
+  const observationError = useAppStore((state) => state.observationError);
 
   const prefetchOutcome = (
     analysis: VisualAnalysisResult,
@@ -49,6 +58,49 @@ const DialoguePage = () => {
   };
 
   const currentSpirit = currentSpeaker ? SPIRITS[currentSpeaker] : null;
+
+  const scheduleNavigateToObservation = () => {
+    setStage('observation');
+    pendingNavStartRef.current = Date.now();
+    setIsPendingObservationNav(true);
+  };
+
+  useEffect(() => {
+    if (!isPendingObservationNav) return;
+
+    const reportDone =
+      (!isGeneratingObservation && !!observationRecord) || !!observationError;
+
+    if (!reportDone) return;
+
+    const remaining = Math.max(
+      0,
+      OBSERVATION_NAV_DELAY_MS - (Date.now() - pendingNavStartRef.current)
+    );
+
+    if (observationNavTimer.current) {
+      clearTimeout(observationNavTimer.current);
+    }
+
+    observationNavTimer.current = setTimeout(() => {
+      observationNavTimer.current = null;
+      setIsPendingObservationNav(false);
+      navigate('/observation');
+    }, remaining);
+
+    return () => {
+      if (observationNavTimer.current) {
+        clearTimeout(observationNavTimer.current);
+        observationNavTimer.current = null;
+      }
+    };
+  }, [
+    isPendingObservationNav,
+    observationRecord,
+    isGeneratingObservation,
+    observationError,
+    navigate,
+  ]);
 
   // Round 1：智慧灵首发，调用 DeepSeek 生成个性化提问
   useEffect(() => {
@@ -80,7 +132,7 @@ const DialoguePage = () => {
   }, [currentRound, dialogueHistory.length, visualAnalysis, hiddenSoulPool, addDialogueMessage, setCurrentSpeaker, updateSoulPool]);
 
   const handleSend = async () => {
-    if (!userInput.trim() || !currentSpeaker || isFetching) return;
+    if (!userInput.trim() || !currentSpeaker || isFetching || isPendingObservationNav) return;
 
     const userText = userInput.trim();
     setUserInput('');
@@ -104,8 +156,7 @@ const DialoguePage = () => {
       if (visualAnalysis) {
         prefetchOutcome(visualAnalysis, updatedHistory, hiddenSoulPool);
       }
-      setStage('observation');
-      navigate('/observation');
+      scheduleNavigateToObservation();
       return;
     }
 
@@ -153,8 +204,7 @@ const DialoguePage = () => {
       if (visualAnalysis) {
         if (resp.is_complete) {
           prefetchOutcome(visualAnalysis, finalHistory, resp.soul_pool);
-          setStage('observation');
-          navigate('/observation');
+          scheduleNavigateToObservation();
         } else if (nextRound === 2) {
           prefetchOutcome(visualAnalysis, finalHistory, resp.soul_pool);
         }
@@ -172,6 +222,9 @@ const DialoguePage = () => {
       handleSend();
     }
   };
+
+  const reportReadyForNav =
+    (!isGeneratingObservation && !!observationRecord) || !!observationError;
 
   return (
     <motion.div
@@ -236,7 +289,7 @@ const DialoguePage = () => {
                 boxShadow: `0 0 30px ${currentSpirit.color}40`,
               }}
             >
-              {currentSpirit.emoji}
+              <SpiritAvatar spirit={currentSpirit} size="large" className="w-full h-full" />
             </div>
             <motion.div
               className="absolute -bottom-6 left-1/2 -translate-x-1/2 whitespace-nowrap"
@@ -248,7 +301,7 @@ const DialoguePage = () => {
         )}
 
         {/* 对话区域 */}
-        <div className="flex-1 max-w-xl space-y-4 overflow-y-auto px-4">
+        <div className="flex-1 max-w-xl space-y-4 overflow-y-auto px-4 pb-24">
           {dialogueHistory.map((message, index) => {
             const spirit = SPIRITS[message.speaker];
             return (
@@ -267,7 +320,7 @@ const DialoguePage = () => {
                       border: `2px solid ${spirit.color}`,
                     }}
                   >
-                    {spirit.emoji}
+                    <SpiritAvatar spirit={spirit} size="small" className="w-8 h-8" />
                   </div>
                 )}
 
@@ -306,12 +359,38 @@ const DialoguePage = () => {
                     border: `2px solid ${currentSpirit.color}`,
                   }}
                 >
-                  {currentSpirit.emoji}
+                  <SpiritAvatar spirit={currentSpirit} size="small" className="w-8 h-8" />
                 </div>
               )}
               <div className="px-4 py-3 rounded-2xl bg-ink-light/50 flex items-center gap-2">
                 <Loader2 className="w-4 h-4 animate-spin text-amber-gold" />
                 <span className="text-sm text-amber-light/60 font-hei">灵宠正在感知……</span>
+              </div>
+            </motion.div>
+          )}
+
+          {isPendingObservationNav && (
+            <motion.div
+              className="flex gap-3"
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+            >
+              {currentSpirit && (
+                <div
+                  className="w-10 h-10 rounded-full flex items-center justify-center text-lg shrink-0"
+                  style={{
+                    backgroundColor: `${currentSpirit.color}20`,
+                    border: `2px solid ${currentSpirit.color}`,
+                  }}
+                >
+                  <SpiritAvatar spirit={currentSpirit} size="small" className="w-8 h-8" />
+                </div>
+              )}
+              <div className="px-4 py-3 rounded-2xl bg-ink-light/50 flex items-center gap-2">
+                <Loader2 className="w-4 h-4 animate-spin text-amber-gold" />
+                <span className="text-sm text-amber-light/60 font-hei">
+                  {reportReadyForNav ? '即将进入观察记录…' : '灵宠正在整理观察记录…'}
+                </span>
               </div>
             </motion.div>
           )}
@@ -336,13 +415,15 @@ const DialoguePage = () => {
       </motion.div>
 
       {/* 输入区域 */}
+      {!isPendingObservationNav && (
       <motion.div
         className="fixed bottom-0 left-0 right-0 p-4 bg-ink-blue/80 backdrop-blur-sm"
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.5 }}
       >
-        <div className="max-w-xl mx-auto flex gap-3">
+        <div className="max-w-xl mx-auto">
+          <div className="flex gap-3">
           <input
             type="text"
             value={userInput}
@@ -350,16 +431,16 @@ const DialoguePage = () => {
             onKeyDown={handleKeyDown}
             placeholder="简短回答即可（是/否/一句话）"
             className="flex-1 px-4 py-3 rounded-full bg-ink-light/50 text-amber-light placeholder:text-amber-light/50 border border-amber-gold/30 focus:border-amber-gold focus:outline-none transition-all"
-            disabled={isFetching}
+            disabled={isFetching || isPendingObservationNav}
           />
           <motion.button
             onClick={handleSend}
-            disabled={!userInput.trim() || isFetching}
+            disabled={!userInput.trim() || isFetching || isPendingObservationNav}
             className={`px-6 py-3 rounded-full bg-amber-gold text-ink-blue flex items-center gap-2 ${
-              !userInput.trim() || isFetching ? 'opacity-50' : ''
+              !userInput.trim() || isFetching || isPendingObservationNav ? 'opacity-50' : ''
             }`}
-            whileHover={userInput.trim() && !isFetching ? { scale: 1.05 } : {}}
-            whileTap={userInput.trim() && !isFetching ? { scale: 0.95 } : {}}
+            whileHover={userInput.trim() && !isFetching && !isPendingObservationNav ? { scale: 1.05 } : {}}
+            whileTap={userInput.trim() && !isFetching && !isPendingObservationNav ? { scale: 0.95 } : {}}
           >
             {isFetching ? (
               <Loader2 className="w-4 h-4 animate-spin" />
@@ -370,8 +451,10 @@ const DialoguePage = () => {
               </>
             )}
           </motion.button>
+          </div>
         </div>
       </motion.div>
+      )}
     </motion.div>
   );
 };

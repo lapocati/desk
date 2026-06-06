@@ -4,6 +4,7 @@ import { Sparkles, Camera } from 'lucide-react';
 import { useAppStore } from '@/store';
 import { SPIRITS } from '@/constants';
 import ParticleBackground from '@/components/ParticleBackground';
+import SpiritAvatar from '@/components/SpiritAvatar';
 
 const HomePage = () => {
   const navigate = useNavigate();
@@ -59,7 +60,7 @@ const HomePage = () => {
               ease: 'easeInOut',
             }}
           >
-            灵瑞集
+            桌说
           </motion.h1>
           <motion.p
             className="text-2xl md:text-3xl font-song text-amber-light/80"
@@ -96,7 +97,7 @@ const HomePage = () => {
                   border: `2px solid ${spirit.color}`,
                 }}
               >
-                {spirit.emoji}
+                <SpiritAvatar spirit={spirit} size="small" className="w-[60px] h-[60px] md:w-[74px] md:h-[74px]" />
               </div>
               <motion.div
                 className="absolute -bottom-8 left-1/2 -translate-x-1/2 opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap"
@@ -135,14 +136,6 @@ const HomePage = () => {
           <span className="font-song">开始探索</span>
           <Sparkles className="w-5 h-5" />
         </motion.button>
-
-        {/* 底部说明 */}
-        <motion.div
-          className="mt-16 text-center text-sm text-amber-light/50"
-          variants={itemVariants}
-        >
-          <p>数据仅存Session，关闭浏览器即清除，保障绝对隐私</p>
-        </motion.div>
       </div>
     </motion.div>
   );

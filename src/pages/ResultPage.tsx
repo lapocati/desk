@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { Download, Users, Share2, Heart } from 'lucide-react';
 import { useAppStore } from '@/store';
 import { SPIRITS } from '@/constants';
+import SpiritAvatar from '@/components/SpiritAvatar';
 
 const ResultPage = () => {
   const navigate = useNavigate();
@@ -73,7 +74,7 @@ const ResultPage = () => {
             ease: 'easeInOut',
           }}
         >
-          {primarySpirit.emoji}
+          <SpiritAvatar spirit={primarySpirit} size="large" className="w-full h-full" />
         </motion.div>
 
         {/* 共鸣度环形进度 */}
@@ -129,7 +130,7 @@ const ResultPage = () => {
               transition={{ delay: 0.7 + index * 0.1 }}
             >
               <div
-                className={`w-12 h-12 rounded-full flex items-center justify-center text-xl ${
+                className={`w-16 h-16 rounded-full flex items-center justify-center text-xl ${
                   index === 0 ? 'glow-spirit' : ''
                 }`}
                 style={{
@@ -137,7 +138,7 @@ const ResultPage = () => {
                   border: `2px solid ${spirit.color}`,
                 }}
               >
-                {spirit.emoji}
+                <SpiritAvatar spirit={spirit} size="small" className="w-14 h-14" />
               </div>
               <span className="text-xs text-amber-light/70 mt-1">
                 {item.resonance}%

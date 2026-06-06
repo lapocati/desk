@@ -2,7 +2,6 @@ import { useState, useRef, useCallback, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 import {
-  Heart,
   Sparkles,
   ArrowLeft,
   Upload,
@@ -13,6 +12,7 @@ import {
 } from 'lucide-react';
 import { useAppStore } from '@/store';
 import { SPIRITS } from '@/constants';
+import SpiritAvatar from '@/components/SpiritAvatar';
 import { analyzeFriendForPk } from '@/utils/analyzeFriendForPk';
 import { mapFinalResultToPkInput } from '@/utils/mapFinalResultToPkInput';
 import { getPkRelationship } from '@/services/pkRelationshipApi';
@@ -284,27 +284,23 @@ const ComparePage = () => {
       {showResult && friendSpirit && pkRelationship && (
         <>
           <motion.div
-            className="w-full max-w-2xl grid grid-cols-2 gap-8 mb-8"
+            className="w-full max-w-2xl flex items-start justify-center gap-4 mb-8"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ delay: 0.3 }}
           >
             <motion.div
-              className="spirit-card flex flex-col items-center"
+              className="spirit-card flex flex-col items-center flex-1 max-w-xs"
               initial={{ opacity: 0, x: -20 }}
               animate={{ opacity: 1, x: 0 }}
               style={{ borderColor: `${primarySpirit.color}30` }}
             >
               <motion.div
-                className="w-20 h-20 rounded-full flex items-center justify-center text-3xl mb-4"
-                style={{
-                  backgroundColor: `${primarySpirit.color}20`,
-                  border: `3px solid ${primarySpirit.color}`,
-                }}
+                className="mb-4"
                 animate={{ y: [0, -5, 0] }}
                 transition={{ duration: 2, repeat: Infinity }}
               >
-                {primarySpirit.emoji}
+                <SpiritAvatar spirit={primarySpirit} size="large" className="w-32 h-32 md:w-36 md:h-36" />
               </motion.div>
               <h3 className="text-xl font-song font-bold mb-2" style={{ color: primarySpirit.color }}>
                 {primarySpirit.name}
@@ -319,21 +315,29 @@ const ComparePage = () => {
             </motion.div>
 
             <motion.div
-              className="spirit-card flex flex-col items-center"
+              className="flex shrink-0 items-center justify-center mt-14 pointer-events-none"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1, rotate: [0, 360] }}
+              transition={{
+                opacity: { duration: 0.3 },
+                rotate: { duration: 3, repeat: Infinity, ease: 'linear' },
+              }}
+            >
+              <Sparkles className="w-8 h-8 text-spirit-purple" />
+            </motion.div>
+
+            <motion.div
+              className="spirit-card flex flex-col items-center flex-1 max-w-xs"
               initial={{ opacity: 0, x: 20 }}
               animate={{ opacity: 1, x: 0 }}
               style={{ borderColor: `${friendSpirit.color}30` }}
             >
               <motion.div
-                className="w-20 h-20 rounded-full flex items-center justify-center text-3xl mb-4"
-                style={{
-                  backgroundColor: `${friendSpirit.color}20`,
-                  border: `3px solid ${friendSpirit.color}`,
-                }}
+                className="mb-4"
                 animate={{ y: [0, -5, 0] }}
                 transition={{ duration: 2, repeat: Infinity, delay: 0.5 }}
               >
-                {friendSpirit.emoji}
+                <SpiritAvatar spirit={friendSpirit} size="large" className="w-32 h-32 md:w-36 md:h-36" />
               </motion.div>
               <h3 className="text-xl font-song font-bold mb-2" style={{ color: friendSpirit.color }}>
                 {friendSpirit.name}
@@ -345,22 +349,6 @@ const ComparePage = () => {
                 <span className="text-xs text-amber-gold">{friendResult.personalityTag}</span>
               </div>
               <p className="mt-2 text-xs text-amber-light/50">好友</p>
-            </motion.div>
-          </motion.div>
-
-          <motion.div
-            className="flex items-center justify-center gap-4 mb-8"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-          >
-            <motion.div animate={{ scale: [1, 1.2, 1] }} transition={{ duration: 1.5, repeat: Infinity }}>
-              <Heart className="w-8 h-8 text-amber-gold" />
-            </motion.div>
-            <motion.div
-              animate={{ rotate: [0, 360] }}
-              transition={{ duration: 3, repeat: Infinity, ease: 'linear' }}
-            >
-              <Sparkles className="w-6 h-6 text-spirit-purple" />
             </motion.div>
           </motion.div>
 

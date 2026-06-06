@@ -12,6 +12,8 @@ export const SPIRITS: Record<string, SpiritInfo> = {
     languageStyle: '理性沉稳、善用比喻',
     color: '#6366F1',
     emoji: '📚',
+    iconLarge: '/spirits/wisdom.png',
+    iconSmall: '/spirits/wisdom-sm.png',
   },
   vitality: {
     type: 'vitality',
@@ -23,6 +25,8 @@ export const SPIRITS: Record<string, SpiritInfo> = {
     languageStyle: '活泼直率、鼓励为主',
     color: '#F59E0B',
     emoji: '⚡',
+    iconLarge: '/spirits/vitality.png',
+    iconSmall: '/spirits/vitality-sm.png',
   },
   healing: {
     type: 'healing',
@@ -34,6 +38,8 @@ export const SPIRITS: Record<string, SpiritInfo> = {
     languageStyle: '温柔细腻、善解人意',
     color: '#EC4899',
     emoji: '🌸',
+    iconLarge: '/spirits/healing.png',
+    iconSmall: '/spirits/healing-sm.png',
   },
   fantasy: {
     type: 'fantasy',
@@ -45,6 +51,8 @@ export const SPIRITS: Record<string, SpiritInfo> = {
     languageStyle: '天马行空、脑洞大开',
     color: '#8B5CF6',
     emoji: '✨',
+    iconLarge: '/spirits/fantasy.png',
+    iconSmall: '/spirits/fantasy-sm.png',
   },
   guardian: {
     type: 'guardian',
@@ -56,6 +64,8 @@ export const SPIRITS: Record<string, SpiritInfo> = {
     languageStyle: '关怀备至、细心周到',
     color: '#10B981',
     emoji: '🛡️',
+    iconLarge: '/spirits/guardian.png',
+    iconSmall: '/spirits/guardian-sm.png',
   },
 };
 

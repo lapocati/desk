@@ -4,6 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import { useAppStore } from '@/store';
 import { LOADING_MESSAGES, SPIRITS } from '@/constants';
 import ParticleEffect from '@/components/ParticleEffect';
+import SpiritAvatar from '@/components/SpiritAvatar';
 import { analyzeImage } from '@/services/qwenApi';
 
 const LoadingPage = () => {
@@ -182,7 +183,7 @@ const LoadingPage = () => {
                 }}
               >
                 <motion.div
-                  className="w-12 h-12 rounded-full flex items-center justify-center text-xl"
+                  className="w-16 h-16 rounded-full flex items-center justify-center text-xl"
                   style={{
                     backgroundColor: `${spirit.color}30`,
                     border: `2px solid ${spirit.color}`,
@@ -197,7 +198,7 @@ const LoadingPage = () => {
                     ease: 'linear',
                   }}
                 >
-                  {spirit.emoji}
+                  <SpiritAvatar spirit={spirit} size="small" className="w-14 h-14" />
                 </motion.div>
               </motion.div>
             );

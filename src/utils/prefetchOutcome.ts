@@ -13,6 +13,21 @@ interface PrefetchSetters {
 let prefetchAbort: AbortController | null = null;
 let prefetchGeneration = 0;
 
+function friendlyMessage(err: unknown, context: 'observation' | 'result'): string {
+  if (!(err instanceof Error)) {
+    return context === 'observation' ? '观察记录生成失败，请重试' : '结果页文案生成失败，请重试';
+  }
+
+  const msg = err.message;
+  if (msg.includes('API Key') || msg.includes('API 请求失败') || msg.includes('返回内容为空')) {
+    return msg;
+  }
+  if (context === 'observation') {
+    return '观察记录生成失败，请重试';
+  }
+  return '结果页文案生成失败，请重试';
+}
+
 export function prefetchObservationAndResult(
   analysis: VisualAnalysisResult,
   history: DialogueMessage[],
@@ -34,16 +49,33 @@ export function prefetchObservationAndResult(
   getObservationAndResult(analysis, history, pool, signal)
     .then(({ observation, result }) => {
       if (signal.aborted || generation !== prefetchGeneration) return;
+
       setters.setObservationRecord(observation);
       setters.setIsGeneratingObservation(false);
-      setters.setFinalResult(result);
-      setters.setIsGeneratingResult(false);
+
+      if (result) {
+        setters.setFinalResult(result);
+        setters.setIsGeneratingResult(false);
+        return;
+      }
+
+      return getFinalResult(analysis, history, pool, observation)
+        .then((finalResult) => {
+          if (signal.aborted || generation !== prefetchGeneration) return;
+          setters.setFinalResult(finalResult);
+        })
+        .catch((err) => {
+          if (signal.aborted || generation !== prefetchGeneration) return;
+          setters.setResultError(friendlyMessage(err, 'result'));
+        })
+        .finally(() => {
+          if (signal.aborted || generation !== prefetchGeneration) return;
+          setters.setIsGeneratingResult(false);
+        });
     })
     .catch((err) => {
       if (signal.aborted || generation !== prefetchGeneration) return;
-      const message = err instanceof Error ? err.message : '生成失败，请重试';
-      setters.setObservationError(message);
-      setters.setResultError(message);
+      setters.setObservationError(friendlyMessage(err, 'observation'));
       setters.setIsGeneratingObservation(false);
       setters.setIsGeneratingResult(false);
     });
@@ -66,7 +98,7 @@ export function prefetchFinalResult(
       setters.setIsGeneratingResult(false);
     })
     .catch((err) => {
-      setters.setResultError(err instanceof Error ? err.message : '结果页文案生成失败');
+      setters.setResultError(friendlyMessage(err, 'result'));
       setters.setIsGeneratingResult(false);
     });
 }

@@ -1,9 +1,24 @@
 import { motion } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
-import { Lightbulb, Sparkles, Users, RefreshCw, Loader2 } from 'lucide-react';
+import { Lightbulb, Sparkles, Users, RefreshCw, Loader2, MessageCircle, Map } from 'lucide-react';
 import { useAppStore } from '@/store';
 import { SPIRITS } from '@/constants';
 import { prefetchFinalResult, prefetchObservationAndResult } from '@/utils/prefetchOutcome';
+import SpiritAvatar from '@/components/SpiritAvatar';
+import type { SpiritType } from '@/types';
+
+const LABEL_TO_SPIRIT: Record<string, SpiritType> = {
+  智慧灵: 'wisdom',
+  活力灵: 'vitality',
+  治愈灵: 'healing',
+  奇想灵: 'fantasy',
+  守护灵: 'guardian',
+};
+
+function getSpiritByLabel(label: string, fallback: SpiritType): (typeof SPIRITS)[SpiritType] {
+  const type = LABEL_TO_SPIRIT[label] ?? fallback;
+  return SPIRITS[type];
+}
 
 const ObservationPage = () => {
   const navigate = useNavigate();
@@ -137,48 +152,138 @@ const ObservationPage = () => {
       </motion.div>
 
       <motion.div
-        className="card mb-6"
-        initial={{ opacity: 0, x: -20 }}
-        animate={{ opacity: 1, x: 0 }}
+        className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6 min-h-[280px]"
+        initial={{ opacity: 0, y: 10 }}
+        animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.2 }}
       >
-        <div className="flex items-center gap-2 mb-4">
-          <Lightbulb className="w-5 h-5 text-amber-gold" />
-          <h3 className="text-lg font-song font-bold text-amber-light">
-            证据链推理
-          </h3>
-        </div>
-        <p className="text-sm text-amber-light/70 font-hei leading-relaxed whitespace-pre-line">
-          {observationRecord.evidenceChain}
-        </p>
-      </motion.div>
+        {/* 列1：本轮发现 */}
+        <motion.div
+          className="card p-4 h-full overflow-hidden flex flex-col"
+          initial={{ opacity: 0, x: -20 }}
+          animate={{ opacity: 1, x: 0 }}
+          transition={{ delay: 0.25 }}
+        >
+          <div className="flex items-center gap-2 mb-3">
+            <Lightbulb className="w-4 h-4 text-amber-gold shrink-0" />
+            <h3 className="text-base font-song font-bold text-amber-light">本轮发现</h3>
+          </div>
+          <ul className="space-y-2 flex-1">
+            {observationRecord.discoveries.map((item, index) => (
+              <motion.li
+                key={index}
+                className="flex items-start gap-2 text-sm text-amber-light/80 font-hei"
+                initial={{ opacity: 0, x: -10 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ delay: 0.3 + index * 0.05 }}
+              >
+                <span className="text-amber-gold shrink-0">✓</span>
+                {item}
+              </motion.li>
+            ))}
+          </ul>
+        </motion.div>
 
-      <motion.div
-        className="spirit-card mb-6"
-        initial={{ opacity: 0, x: 20 }}
-        animate={{ opacity: 1, x: 0 }}
-        transition={{ delay: 0.3 }}
-        style={{ borderColor: `${topSpirit.color}30` }}
-      >
-        <div className="flex items-center gap-2 mb-4">
-          <motion.div
-            className="w-8 h-8 rounded-full flex items-center justify-center text-lg"
-            style={{
-              backgroundColor: `${topSpirit.color}20`,
-              border: `2px solid ${topSpirit.color}`,
-            }}
-            animate={{ rotate: [0, 360] }}
-            transition={{ duration: 4, repeat: Infinity, ease: 'linear' }}
-          >
-            {topSpirit.emoji}
-          </motion.div>
-          <h3 className="text-lg font-song font-bold" style={{ color: topSpirit.color }}>
-            灵居气息观察
-          </h3>
-        </div>
-        <p className="text-sm text-amber-light/70 font-hei leading-relaxed">
-          {observationRecord.spiritObservation}
-        </p>
+        {/* 列2：灵宠吐槽 */}
+        <motion.div
+          className="card p-4 h-full overflow-hidden flex flex-col"
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.3 }}
+        >
+          <div className="flex items-center gap-2 mb-3">
+            <MessageCircle className="w-4 h-4 shrink-0 text-amber-gold" />
+            <h3 className="text-base font-song font-bold text-amber-light">灵宠吐槽</h3>
+          </div>
+          <div className="space-y-3 overflow-y-auto flex-1">
+            {observationRecord.spiritComments.map((comment, index) => {
+              const spirit = getSpiritByLabel(comment.speaker, sortedPool[0][0] as SpiritType);
+              return (
+                <motion.div
+                  key={index}
+                  className="flex gap-3 items-start"
+                  initial={{ opacity: 0, y: 8 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.35 + index * 0.08 }}
+                >
+                  <div
+                    className="w-9 h-9 rounded-full flex items-center justify-center shrink-0"
+                    style={{
+                      backgroundColor: `${spirit.color}20`,
+                      border: `2px solid ${spirit.color}`,
+                    }}
+                  >
+                    <SpiritAvatar spirit={spirit} size="small" className="w-7 h-7" />
+                  </div>
+                  <div
+                    className="flex-1 rounded-xl px-3 py-2 text-sm font-hei text-amber-light/80 leading-relaxed"
+                    style={{ backgroundColor: `${spirit.color}10` }}
+                  >
+                    <span className="text-xs block mb-1" style={{ color: spirit.color }}>
+                      {comment.speaker}
+                    </span>
+                    「{comment.quote}」
+                  </div>
+                </motion.div>
+              );
+            })}
+          </div>
+        </motion.div>
+
+        {/* 列3：灵居共鸣图 */}
+        <motion.div
+          className="card p-4 h-full overflow-hidden flex flex-col"
+          initial={{ opacity: 0, x: 20 }}
+          animate={{ opacity: 1, x: 0 }}
+          transition={{ delay: 0.35 }}
+        >
+          <div className="flex items-center gap-2 mb-3">
+            <Map className="w-4 h-4 text-amber-gold shrink-0" />
+            <h3 className="text-base font-song font-bold text-amber-light">灵居共鸣图</h3>
+          </div>
+          <div className="space-y-2 flex-1">
+            {observationRecord.resonanceZones.map((zone, index) => {
+              const zoneSpirit = getSpiritByLabel(zone.guardian, sortedPool[0][0] as SpiritType);
+              return (
+                <motion.div
+                  key={index}
+                  className="space-y-0.5"
+                  initial={{ opacity: 0, x: 10 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  transition={{ delay: 0.4 + index * 0.05 }}
+                >
+                  <div className="flex items-center justify-between gap-2">
+                    <span className="text-xs font-song font-bold text-amber-light shrink-0">
+                      {zone.name}
+                    </span>
+                    <span
+                      className="text-[10px] px-1.5 py-0.5 rounded-full shrink-0"
+                      style={{
+                        backgroundColor: `${zoneSpirit.color}20`,
+                        color: zoneSpirit.color,
+                      }}
+                    >
+                      {zone.guardian}
+                    </span>
+                    <span className="text-[10px] text-amber-gold tabular-nums shrink-0">
+                      {zone.value}
+                    </span>
+                  </div>
+                  <div className="h-1 rounded-full bg-ink-blue/50 overflow-hidden">
+                    <div
+                      className="h-full rounded-full transition-all"
+                      style={{
+                        width: `${zone.value}%`,
+                        backgroundColor: zoneSpirit.color,
+                      }}
+                    />
+                  </div>
+                  <p className="text-[10px] text-amber-light/60 font-hei truncate">{zone.desc}</p>
+                </motion.div>
+              );
+            })}
+          </div>
+        </motion.div>
       </motion.div>
 
       <motion.div
