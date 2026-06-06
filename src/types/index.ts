@@ -137,9 +137,15 @@ export interface PkRelationshipResult {
   scenarios: string[];
 }
 
+// 时间轴节点评论
+export interface TimelineComment {
+  spirit: string;
+  message: string;
+}
+
 // 应用状态
 export interface AppState {
-  stage: 'home' | 'upload' | 'loading' | 'dialogue' | 'observation' | 'result' | 'compare';
+  stage: 'home' | 'upload' | 'loading' | 'dialogue' | 'observation' | 'result' | 'compare' | 'timeline';
   photoUrl: string | null;
   photoHistory: PhotoHistoryItem[];
   visualAnalysis: VisualAnalysisResult | null;

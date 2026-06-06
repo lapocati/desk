@@ -1,7 +1,7 @@
 import { useRef } from 'react';
 import { motion } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
-import { Download, Users, Share2 } from 'lucide-react';
+import { Clock, Users, Share2 } from 'lucide-react';
 import { useAppStore } from '@/store';
 import { getSpiritBeastName } from '@/constants';
 import PageShell from '@/components/PageShell';
@@ -20,8 +20,9 @@ const ResultPage = () => {
     return null;
   }
 
-  const handleDownload = () => {
-    alert('卡片已保存到本地');
+  const handleLoadTimeline = () => {
+    setStage('timeline');
+    navigate('/timeline');
   };
 
   const handleShare = () => {
@@ -77,13 +78,13 @@ const ResultPage = () => {
           transition={{ delay: 0.5 }}
         >
           <motion.button
-            onClick={handleDownload}
+            onClick={handleLoadTimeline}
             className="btn-primary flex items-center gap-2"
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
           >
-            <Download className="w-4 h-4" />
-            <span>下载卡片</span>
+            <Clock className="w-4 h-4" />
+            <span>载入时间轴</span>
           </motion.button>
 
           <motion.button

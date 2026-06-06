@@ -7,6 +7,7 @@ import type {
   SoulPool,
   SpiritComment,
   SpiritType,
+  TimelineComment,
   VisualAnalysisResult,
 } from '@/types';
 
@@ -1091,4 +1092,102 @@ ${base.personalityTag}`;
   }
 
   throw new Error('结果页文案生成失败，请重试');
+}
+
+const TIMELINE_MOMENT_SYSTEM_PROMPT = `你是灵瑞集世界观中的五位灵宠。
+
+你正在撰写"灵宠观察时间轴"的【此刻】节点。
+
+目标：
+让用户产生"它真的观察到了我"的感觉。
+
+要求：
+
+1. 只描述当前状态。禁止预测未来。禁止提出建议。禁止说教。
+
+2. 必须结合真实桌面特征。必须引用输入中的视觉线索（例如：咖啡杯、便签、书籍、电脑、草稿纸、收藏物等）。
+
+3. 语言风格：温柔、克制、观察者视角。使用"我发现..."、"我注意到..."、"我有一个猜测..."。禁止"你应该"、"建议你"、"必须"。
+
+4. 输出固定3条评论。每条评论长度：20-40字。
+
+5. 三条评论必须来自不同灵宠。
+
+格式严格如下（只输出 JSON 数组，不附加任何其他文字）：
+[
+ { "spirit":"智慧灵", "message":"..." },
+ { "spirit":"奇想灵", "message":"..." },
+ { "spirit":"守护灵", "message":"..." }
+]`;
+
+export interface TimelineMomentInput {
+  personality: string;
+  subPersonality: string;
+  topSpirits: string[];
+  visualFeatures: string[];
+  conversationSummary: string[];
+}
+
+function parseTimelineComments(rawText: string): TimelineComment[] {
+  let parsed: unknown;
+  try {
+    parsed = JSON.parse(rawText.trim());
+  } catch {
+    const arrayMatch = rawText.match(/\[[\s\S]*\]/);
+    if (!arrayMatch) {
+      throw new Error('时间轴节点返回格式异常，无法解析 JSON');
+    }
+    parsed = JSON.parse(arrayMatch[0]);
+  }
+
+  if (!Array.isArray(parsed)) {
+    throw new Error('时间轴节点返回格式异常');
+  }
+
+  const comments = parsed
+    .map((item) => {
+      const c = item as Record<string, unknown>;
+      const spirit = String(c.spirit || '').trim();
+      const message = String(c.message || '').trim();
+      return spirit && message ? { spirit, message } : null;
+    })
+    .filter((c): c is TimelineComment => c !== null);
+
+  if (comments.length !== 3) {
+    throw new Error('时间轴节点评论必须为恰好3条');
+  }
+
+  return comments;
+}
+
+export async function getTimelineMoment(
+  input: TimelineMomentInput
+): Promise<TimelineComment[]> {
+  const { apiKey } = API_CONFIG.deepseek;
+
+  if (!apiKey) {
+    throw new Error('未配置 DeepSeek API Key，请在 .env 文件中填写 VITE_DEEPSEEK_API_KEY');
+  }
+
+  const userPrompt = `请根据以下输入撰写【此刻】节点的 3 条观察评论，严格输出 JSON 数组，不要附加任何其他文字。
+
+${JSON.stringify(
+    {
+      personality: input.personality,
+      subPersonality: input.subPersonality,
+      topSpirits: input.topSpirits,
+      visualFeatures: input.visualFeatures,
+      conversationSummary: input.conversationSummary,
+    },
+    null,
+    2
+  )}`;
+
+  const messages = [
+    { role: 'system' as const, content: TIMELINE_MOMENT_SYSTEM_PROMPT },
+    { role: 'user' as const, content: userPrompt },
+  ];
+
+  const rawText = await requestDeepSeekResult(messages, 0.8);
+  return parseTimelineComments(rawText);
 }

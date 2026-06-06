@@ -7,6 +7,7 @@ import DialoguePage from '@/pages/DialoguePage';
 import ObservationPage from '@/pages/ObservationPage';
 import ResultPage from '@/pages/ResultPage';
 import ComparePage from '@/pages/ComparePage';
+import TimelinePage from '@/pages/TimelinePage';
 
 function App() {
   return (
@@ -20,6 +21,7 @@ function App() {
           <Route path="/observation" element={<ObservationPage />} />
           <Route path="/result" element={<ResultPage />} />
           <Route path="/compare" element={<ComparePage />} />
+          <Route path="/timeline" element={<TimelinePage />} />
         </Routes>
       </AnimatePresence>
     </BrowserRouter>
