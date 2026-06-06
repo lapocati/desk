@@ -1,0 +1,41 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  body {
+    @apply bg-ink-blue text-amber-light font-hei;
+  }
+}
+
+@layer components {
+  .btn-primary {
+    @apply px-8 py-4 rounded-full bg-gradient-to-r from-amber-gold to-amber-dark text-ink-blue font-song text-lg shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105;
+  }
+
+  .btn-secondary {
+    @apply px-6 py-3 rounded-full bg-ink-light text-amber-gold font-hei border border-amber-gold/30 hover:bg-amber-gold/10 transition-all duration-300;
+  }
+
+  .card {
+    @apply bg-ink-light/50 backdrop-blur-sm rounded-2xl border border-amber-gold/20 p-6 shadow-xl;
+  }
+
+  .spirit-card {
+    @apply bg-gradient-to-br from-ink-light to-ink-blue rounded-3xl border border-amber-gold/30 p-8 shadow-2xl;
+  }
+
+  .text-gradient {
+    @apply bg-gradient-to-r from-amber-gold via-amber-light to-amber-gold bg-clip-text text-transparent;
+  }
+}
+
+@layer utilities {
+  .glow-amber {
+    box-shadow: 0 0 20px rgba(212, 165, 116, 0.3), 0 0 40px rgba(212, 165, 116, 0.1);
+  }
+
+  .glow-spirit {
+    box-shadow: 0 0 30px rgba(139, 92, 246, 0.2), 0 0 60px rgba(139, 92, 246, 0.1);
+  }
+}
