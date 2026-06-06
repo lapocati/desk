@@ -17,7 +17,11 @@ const PK_SYSTEM_PROMPT = `你是灵瑞集桌灵档案馆的叙事灵宠。现在
   "scenarios": ["相处预测第1句≤25字", "第2句≤25字", "第3句≤25字"]
 }`;
 
-const COMPARISON_WORDS = /更|比|最|胜|碾压|优于|不如|超过|落后/;
+const COMPARISON_PATTERNS = [
+  /更高|更强|更好|更快|更慢|更多|更少/,
+  /赢过|胜过|优于|不如|碾压|超过你|比你更|比.{0,6}更/,
+  /谁更|哪个更|比谁/,
+];
 const ADVICE_PATTERN = /你们适合|你们应该/;
 
 function formatUserBlock(label: string, user: PkUserInput): string {
@@ -27,7 +31,7 @@ function formatUserBlock(label: string, user: PkUserInput): string {
     `- 副人格标签：${user.sub_persona}`,
   ];
   if (user.top_reason) {
-    lines.push(`- 最打动守护灵的一句话：${user.top_reason}`);
+    lines.push(`- 共鸣原因：${user.top_reason}`);
   }
   if (user.resonance_rank && Object.keys(user.resonance_rank).length > 0) {
     const rankStr = Object.entries(user.resonance_rank)
@@ -62,6 +66,10 @@ function countChineseChars(text: string): number {
   return (text.match(/[\u4e00-\u9fff]/g) || []).length;
 }
 
+function hasComparisonLanguage(text: string): boolean {
+  return COMPARISON_PATTERNS.some((pattern) => pattern.test(text));
+}
+
 export function validatePkOutput(
   bond: string,
   scenarios: string[],
@@ -70,7 +78,7 @@ export function validatePkOutput(
 ): string | null {
   const allText = [bond, ...scenarios].join('');
 
-  if (COMPARISON_WORDS.test(allText)) {
+  if (hasComparisonLanguage(allText)) {
     return '输出含比较级或胜负词汇';
   }
   if (ADVICE_PATTERN.test(allText)) {
@@ -97,6 +105,10 @@ export function validatePkOutput(
   }
 
   return null;
+}
+
+function buildRetryMessage(validationError: string): string {
+  return `上次输出不合格：${validationError}。请换全新场景重写，禁止比较级和胜负词，bond≤30字，scenarios恰好3条且每条≤25字，不得照搬输入副人格标签，严格 JSON。`;
 }
 
 function parsePkResponse(rawText: string): PkRelationshipResult {
@@ -127,7 +139,8 @@ function parsePkResponse(rawText: string): PkRelationshipResult {
 }
 
 async function requestPkRelationship(
-  messages: { role: 'system' | 'user'; content: string }[]
+  messages: { role: 'system' | 'user'; content: string }[],
+  temperature = 0.85
 ): Promise<string> {
   const { endpoint, apiKey } = API_CONFIG.deepseek;
 
@@ -140,7 +153,7 @@ async function requestPkRelationship(
     body: JSON.stringify({
       model: 'deepseek-chat',
       messages,
-      temperature: 0.85,
+      temperature,
       max_tokens: 400,
     }),
   });
@@ -160,7 +173,7 @@ async function requestPkRelationship(
   return rawText;
 }
 
-const MAX_RETRIES = 2;
+const MAX_RETRIES = 5;
 
 export async function getPkRelationship(
   user1: PkUserInput,
@@ -177,40 +190,51 @@ export async function getPkRelationship(
     { role: 'user' as const, content: buildUserPrompt(user1, user2) },
   ];
 
-  let lastError: Error | null = null;
+  let lastParsedResult: PkRelationshipResult | null = null;
+  let lastValidationError: string | null = null;
+  let lastHardError: Error | null = null;
+  const retryMessages: { role: 'user'; content: string }[] = [];
 
   for (let attempt = 0; attempt <= MAX_RETRIES; attempt++) {
-    const messages =
-      attempt === 0
-        ? baseMessages
-        : [
-            ...baseMessages,
-            {
-              role: 'user' as const,
-              content:
-                '上次输出不合格。请重新生成：禁止比较级和胜负词，bond≤30字，scenarios恰好3条且每条≤25字，不得照搬输入副人格标签，严格 JSON。',
-            },
-          ];
+    const temperature = attempt >= MAX_RETRIES - 1 ? 0.6 : 0.85;
+    const messages = [...baseMessages, ...retryMessages];
 
     try {
-      const rawText = await requestPkRelationship(messages);
+      const rawText = await requestPkRelationship(messages, temperature);
       const result = parsePkResponse(rawText);
-      const validationError = validatePkOutput(result.bond, result.scenarios, user1, user2);
+      lastParsedResult = result;
 
-      if (validationError && attempt < MAX_RETRIES) {
-        lastError = new Error(validationError);
-        continue;
+      const validationError = validatePkOutput(result.bond, result.scenarios, user1, user2);
+      if (!validationError) {
+        return result;
       }
-      if (validationError) {
-        throw new Error(`PK 关系预测校验失败：${validationError}`);
+
+      lastValidationError = validationError;
+      if (attempt < MAX_RETRIES) {
+        retryMessages.push({
+          role: 'user',
+          content: buildRetryMessage(validationError),
+        });
+        continue;
       }
 
       return result;
     } catch (err) {
-      lastError = err instanceof Error ? err : new Error('PK 关系预测生成失败');
-      if (attempt >= MAX_RETRIES) break;
+      lastHardError = err instanceof Error ? err : new Error('PK 关系预测生成失败');
+      if (attempt < MAX_RETRIES) {
+        retryMessages.push({
+          role: 'user',
+          content: '上次输出格式有误。请严格输出 JSON：{ "bond": "...", "scenarios": ["...", "...", "..."] }',
+        });
+        continue;
+      }
+      break;
     }
   }
 
-  throw lastError ?? new Error('PK 关系预测生成失败');
+  if (lastParsedResult) {
+    return lastParsedResult;
+  }
+
+  throw lastHardError ?? new Error(lastValidationError ?? 'PK 关系预测生成失败');
 }

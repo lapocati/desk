@@ -150,14 +150,14 @@ const DialoguePage = () => {
       setCurrentRound(nextRound);
       setCurrentSpeaker(resp.speaker as SpiritType);
 
-      if (resp.is_complete) {
-        if (visualAnalysis) {
+      if (visualAnalysis) {
+        if (resp.is_complete) {
           prefetchOutcome(visualAnalysis, finalHistory, resp.soul_pool);
-        }
-        setTimeout(() => {
           setStage('observation');
           navigate('/observation');
-        }, 2000);
+        } else if (nextRound === 2) {
+          prefetchOutcome(visualAnalysis, finalHistory, resp.soul_pool);
+        }
       }
     } catch (err) {
       setFetchError(err instanceof Error ? err.message : '灵宠走神了，请稍后重试');

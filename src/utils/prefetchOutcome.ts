@@ -1,4 +1,4 @@
-import { getFinalResult, getObservationRecord } from '@/services/deepseekApi';
+import { getFinalResult, getObservationAndResult } from '@/services/deepseekApi';
 import type { DialogueMessage, FinalResult, ObservationRecord, SoulPool, VisualAnalysisResult } from '@/types';
 
 interface PrefetchSetters {
@@ -10,12 +10,20 @@ interface PrefetchSetters {
   setResultError: (error: string | null) => void;
 }
 
+let prefetchAbort: AbortController | null = null;
+let prefetchGeneration = 0;
+
 export function prefetchObservationAndResult(
   analysis: VisualAnalysisResult,
   history: DialogueMessage[],
   pool: SoulPool,
   setters: PrefetchSetters
 ) {
+  prefetchAbort?.abort();
+  prefetchAbort = new AbortController();
+  const generation = ++prefetchGeneration;
+  const signal = prefetchAbort.signal;
+
   setters.setObservationRecord(null);
   setters.setFinalResult(null);
   setters.setObservationError(null);
@@ -23,17 +31,16 @@ export function prefetchObservationAndResult(
   setters.setIsGeneratingObservation(true);
   setters.setIsGeneratingResult(true);
 
-  getObservationRecord(analysis, history, pool)
-    .then((record) => {
-      setters.setObservationRecord(record);
+  getObservationAndResult(analysis, history, pool, signal)
+    .then(({ observation, result }) => {
+      if (signal.aborted || generation !== prefetchGeneration) return;
+      setters.setObservationRecord(observation);
       setters.setIsGeneratingObservation(false);
-      return getFinalResult(analysis, history, pool, record);
-    })
-    .then((result) => {
       setters.setFinalResult(result);
       setters.setIsGeneratingResult(false);
     })
     .catch((err) => {
+      if (signal.aborted || generation !== prefetchGeneration) return;
       const message = err instanceof Error ? err.message : '生成失败，请重试';
       setters.setObservationError(message);
       setters.setResultError(message);

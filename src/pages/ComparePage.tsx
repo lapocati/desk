@@ -73,8 +73,8 @@ const ComparePage = () => {
           mapFinalResultToPkInput(friend)
         );
         setPkRelationship(pk);
-      } catch (err) {
-        setPkError(err instanceof Error ? err.message : '相处预测生成失败，请重试');
+      } catch {
+        setPkError('pk_retry');
       } finally {
         setIsGeneratingPk(false);
       }
@@ -135,8 +135,8 @@ const ComparePage = () => {
         mapFinalResultToPkInput(friendResult)
       );
       setPkRelationship(pk);
-    } catch (err) {
-      setPkError(err instanceof Error ? err.message : '相处预测生成失败');
+    } catch {
+      setPkError('pk_retry');
     } finally {
       setIsGeneratingPk(false);
     }
@@ -154,8 +154,8 @@ const ComparePage = () => {
 
   const isLoading = isAnalyzingFriend || isGeneratingPk;
   const showResult = !!(friendResult && pkRelationship && !isLoading);
-  const showPkError = !!(friendResult && !pkRelationship && pkError && !isLoading);
-  const showUpload = !showResult && !showPkError && !isLoading;
+  const showPkRetry = !!(friendResult && !pkRelationship && pkError && !isLoading);
+  const showUpload = !showResult && !showPkRetry && !isLoading;
   const showAnalyzing = isLoading;
   const loadingMsg = PK_LOADING_MESSAGES[loadingMsgIndex % PK_LOADING_MESSAGES.length];
 
@@ -263,16 +263,16 @@ const ComparePage = () => {
         </motion.div>
       )}
 
-      {showPkError && friendSpirit && (
+      {showPkRetry && friendSpirit && (
         <motion.div className="flex flex-col items-center gap-6" initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
-          <p className="text-sm text-red-400 font-hei">{pkError}</p>
+          <p className="text-amber-light/80 font-hei text-sm">灵宠走神了，再试一次吧</p>
           <p className="text-amber-light/70 font-hei text-sm">
             好友守护灵已识别：{friendSpirit.name}（共鸣度 {friendResult!.primaryResonance}%）
           </p>
           <div className="flex gap-4">
             <motion.button onClick={handleRetryPkOnly} className="btn-primary flex items-center gap-2">
               <RefreshCw className="w-4 h-4" />
-              <span>重新生成相处预测</span>
+              <span>再试一次</span>
             </motion.button>
             <motion.button onClick={handleChangeFriendPhoto} className="btn-secondary">
               换一张好友照片

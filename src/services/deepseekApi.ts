@@ -537,6 +537,162 @@ async function requestDeepSeekObservation(
   return rawText;
 }
 
+const COMBINED_OBSERVATION_RESULT_PROMPT = `${OBSERVATION_SYSTEM_PROMPT}
+
+---
+
+在完成观察记录后，请基于 spiritObservation 与对话内容，在同一 JSON 对象中继续生成结果页文案：
+
+# 趣味副人格（dynamicPersonality）
+- 字数：≤ 25 字（严格，含标点）
+- 反义词拉扯法 + 引用桌面或对话中的具体物件
+- 第一人称，趣味优先，禁止诊断
+
+# 共鸣原因（resonanceReasons）
+- 严格 3 条，每条 ≤ 18 字，以"· "开头
+- 第一条：桌面视觉直觉；第二条：对话中隐藏韧性；第三条：灵居纽带
+
+# 合并输出格式（严格 JSON，不加任何额外文本）
+{
+  "evidenceChain": "string",
+  "spiritObservation": "string",
+  "scientificAdvice": ["string", ...],
+  "spiritAdvice": ["string", ...],
+  "dynamicPersonality": "一句趣味副人格描述",
+  "resonanceReasons": ["· 第一条", "· 第二条", "· 第三条"]
+}`;
+
+function parseCombinedObservationResult(rawText: string): {
+  observation: ObservationRecord;
+  texts: { dynamicPersonality: string; resonanceReasons: string[] };
+} {
+  let parsed: Record<string, unknown>;
+  try {
+    parsed = JSON.parse(rawText.trim());
+  } catch {
+    const jsonMatch = rawText.match(/\{[\s\S]*\}/);
+    if (!jsonMatch) {
+      throw new Error('观察记录与结果文案返回格式异常，无法解析 JSON');
+    }
+    parsed = JSON.parse(jsonMatch[0]);
+  }
+
+  const observation = parseObservationResponse(
+    JSON.stringify({
+      evidenceChain: parsed.evidenceChain,
+      spiritObservation: parsed.spiritObservation,
+      scientificAdvice: parsed.scientificAdvice,
+      spiritAdvice: parsed.spiritAdvice,
+    })
+  );
+  const texts = parseResultTextsResponse(
+    JSON.stringify({
+      dynamicPersonality: parsed.dynamicPersonality,
+      resonanceReasons: parsed.resonanceReasons,
+    })
+  );
+
+  return { observation, texts };
+}
+
+async function requestDeepSeekCombined(
+  messages: { role: 'system' | 'user'; content: string }[],
+  signal?: AbortSignal
+): Promise<string> {
+  const { endpoint, apiKey } = API_CONFIG.deepseek;
+
+  const response = await fetch(endpoint, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${apiKey}`,
+    },
+    body: JSON.stringify({
+      model: 'deepseek-chat',
+      messages,
+      temperature: 0.8,
+      max_tokens: 1600,
+    }),
+    signal,
+  });
+
+  if (!response.ok) {
+    const errorText = await response.text();
+    throw new Error(`DeepSeek API 请求失败 (${response.status})：${errorText}`);
+  }
+
+  const data = await response.json();
+  const rawText: string = data?.choices?.[0]?.message?.content || '';
+
+  if (!rawText) {
+    throw new Error('DeepSeek API 返回内容为空，请稍后重试');
+  }
+
+  return rawText;
+}
+
+export async function getObservationAndResult(
+  visualAnalysis: VisualAnalysisResult,
+  dialogueHistory: DialogueMessage[],
+  soulPool: SoulPool,
+  signal?: AbortSignal
+): Promise<{ observation: ObservationRecord; result: FinalResult }> {
+  const { apiKey } = API_CONFIG.deepseek;
+
+  if (!apiKey) {
+    throw new Error('未配置 DeepSeek API Key，请在 .env 文件中填写 VITE_DEEPSEEK_API_KEY');
+  }
+
+  const base = buildFinalResultBase(soulPool);
+  const primaryLabel = SPIRIT_LABELS[base.primarySpirit];
+
+  const userPrompt = `请根据以下输入一次性生成《灵居观察记录》与结果页文案，严格输出 JSON，不要附加任何其他文字。
+
+【vision_report】
+${buildVisionReport(visualAnalysis)}
+
+【dialogue_history】
+${formatDialogueHistory(dialogueHistory)}
+
+【current_pet_top3】
+${formatTop3(soulPool)}
+
+【主守护灵（已定，勿改写）】
+${primaryLabel}
+
+【主人格标签（已定，勿改写）】
+${base.personalityTag}`;
+
+  const messages = [
+    { role: 'system' as const, content: COMBINED_OBSERVATION_RESULT_PROMPT },
+    { role: 'user' as const, content: userPrompt },
+  ];
+
+  try {
+    const rawText = await requestDeepSeekCombined(messages, signal);
+    const { observation, texts } = parseCombinedObservationResult(rawText);
+    return { observation, result: { ...base, ...texts } };
+  } catch (firstError) {
+    if (signal?.aborted) throw firstError;
+
+    const retryMessages = [
+      ...messages,
+      {
+        role: 'user' as const,
+        content:
+          '上次输出格式有误。请重新生成，必须严格输出包含 evidenceChain、spiritObservation、scientificAdvice（3-4条）、spiritAdvice（1-2条）、dynamicPersonality（≤25字）、resonanceReasons（恰好3条且每条≤18字）的纯 JSON 对象。',
+      },
+    ];
+    const rawText = await requestDeepSeekCombined(retryMessages, signal);
+    try {
+      const { observation, texts } = parseCombinedObservationResult(rawText);
+      return { observation, result: { ...base, ...texts } };
+    } catch {
+      throw firstError instanceof Error ? firstError : new Error('观察记录与结果文案生成失败');
+    }
+  }
+}
+
 export async function getObservationRecord(
   visualAnalysis: VisualAnalysisResult,
   dialogueHistory: DialogueMessage[],
