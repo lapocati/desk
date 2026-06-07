@@ -199,29 +199,39 @@ export async function analyzeImage(
   };
 
   const requestStart = Date.now();
+  const bodyBytes = JSON.stringify(requestBody).length;
   // #region agent log
-  fetch('http://127.0.0.1:7911/ingest/801965d5-3f5c-4d14-80b2-cf170cfa8be7',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'c6a3d3'},body:JSON.stringify({sessionId:'c6a3d3',runId:'loading-fix',hypothesisId:'A-B',location:'qwenApi.ts:request-body',message:'Qwen request prepared',data:{endpoint,originalLength,compressedLength:base64Data?.length??0,mimeType},timestamp:Date.now()})}).catch(()=>{});
+  fetch('http://127.0.0.1:7911/ingest/801965d5-3f5c-4d14-80b2-cf170cfa8be7',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'6ad995'},body:JSON.stringify({sessionId:'6ad995',runId:'pre-fix',hypothesisId:'B',location:'qwenApi.ts:request-body',message:'Qwen request prepared',data:{endpoint,originalLength,compressedLength:base64Data?.length??0,bodyBytes,mimeType,signalAborted:signal?.aborted??false},timestamp:Date.now()})}).catch(()=>{});
   // #endregion
 
-  const response = await fetch(endpoint, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      Authorization: `Bearer ${apiKey}`,
-    },
-    body: JSON.stringify(requestBody),
-    signal,
-  });
+  let response: Response;
+  try {
+    response = await fetch(endpoint, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${apiKey}`,
+      },
+      body: JSON.stringify(requestBody),
+      signal,
+    });
+  } catch (err) {
+    const elapsedMs = Date.now() - requestStart;
+    // #region agent log
+    fetch('http://127.0.0.1:7911/ingest/801965d5-3f5c-4d14-80b2-cf170cfa8be7',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'6ad995'},body:JSON.stringify({sessionId:'6ad995',runId:'pre-fix',hypothesisId:'A-C-D',location:'qwenApi.ts:fetch-catch',message:'Qwen fetch threw',data:{errorName:err instanceof Error?err.name:'unknown',errorMessage:err instanceof Error?err.message:String(err),signalAborted:signal?.aborted??false,elapsedMs,bodyBytes},timestamp:Date.now()})}).catch(()=>{});
+    // #endregion
+    throw err;
+  }
 
   const elapsedMs = Date.now() - requestStart;
   // #region agent log
-  fetch('http://127.0.0.1:7911/ingest/801965d5-3f5c-4d14-80b2-cf170cfa8be7',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'c6a3d3'},body:JSON.stringify({sessionId:'c6a3d3',runId:'loading-fix',hypothesisId:'A-D',location:'qwenApi.ts:response-status',message:'Qwen API response status',data:{status:response.status,ok:response.ok,elapsedMs},timestamp:Date.now()})}).catch(()=>{});
+  fetch('http://127.0.0.1:7911/ingest/801965d5-3f5c-4d14-80b2-cf170cfa8be7',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'6ad995'},body:JSON.stringify({sessionId:'6ad995',runId:'pre-fix',hypothesisId:'C-E',location:'qwenApi.ts:response-status',message:'Qwen API response status',data:{status:response.status,ok:response.ok,elapsedMs},timestamp:Date.now()})}).catch(()=>{});
   // #endregion
 
   if (!response.ok) {
     const errorText = await response.text();
     // #region agent log
-    fetch('http://127.0.0.1:7911/ingest/801965d5-3f5c-4d14-80b2-cf170cfa8be7',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'c6a3d3'},body:JSON.stringify({sessionId:'c6a3d3',runId:'loading-fix',hypothesisId:'C',location:'qwenApi.ts:error-body',message:'Qwen API error response',data:{status:response.status,errorText:errorText.slice(0,500),elapsedMs},timestamp:Date.now()})}).catch(()=>{});
+    fetch('http://127.0.0.1:7911/ingest/801965d5-3f5c-4d14-80b2-cf170cfa8be7',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'6ad995'},body:JSON.stringify({sessionId:'6ad995',runId:'pre-fix',hypothesisId:'C',location:'qwenApi.ts:error-body',message:'Qwen API error response',data:{status:response.status,errorText:errorText.slice(0,500),elapsedMs},timestamp:Date.now()})}).catch(()=>{});
     // #endregion
     throw new Error(`Qwen API 请求失败 (${response.status})：${errorText}`);
   }
@@ -232,7 +242,7 @@ export async function analyzeImage(
     data?.choices?.[0]?.message?.content ||
     '';
   // #region agent log
-  fetch('http://127.0.0.1:7911/ingest/801965d5-3f5c-4d14-80b2-cf170cfa8be7',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'c6a3d3'},body:JSON.stringify({sessionId:'c6a3d3',runId:'loading-fix',hypothesisId:'A-D',location:'qwenApi.ts:raw-response',message:'Qwen API success',data:{outputKeys:Object.keys(data),hasOutput:!!data?.output,rawTextLength:rawText.length,elapsedMs},timestamp:Date.now()})}).catch(()=>{});
+  fetch('http://127.0.0.1:7911/ingest/801965d5-3f5c-4d14-80b2-cf170cfa8be7',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'6ad995'},body:JSON.stringify({sessionId:'6ad995',runId:'pre-fix',hypothesisId:'C-E',location:'qwenApi.ts:raw-response',message:'Qwen API success',data:{outputKeys:Object.keys(data),hasOutput:!!data?.output,rawTextLength:rawText.length,elapsedMs},timestamp:Date.now()})}).catch(()=>{});
   // #endregion
 
   if (!rawText) {

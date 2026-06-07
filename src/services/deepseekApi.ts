@@ -317,23 +317,37 @@ async function requestDeepSeek(
   temperature = 0.8
 ): Promise<{ parsed: DeepSeekDialogueResponse; rawText: string }> {
   const { endpoint, apiKey } = API_CONFIG.deepseek;
+  const requestStart = Date.now();
+  const bodyBytes = JSON.stringify({ model: 'deepseek-chat', messages, temperature, max_tokens: 800 }).length;
 
-  const response = await fetch(endpoint, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      Authorization: `Bearer ${apiKey}`,
-    },
-    body: JSON.stringify({
-      model: 'deepseek-chat',
-      messages,
-      temperature,
-      max_tokens: 800,
-    }),
-  });
+  let response: Response;
+  try {
+    response = await fetch(endpoint, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${apiKey}`,
+      },
+      body: JSON.stringify({
+        model: 'deepseek-chat',
+        messages,
+        temperature,
+        max_tokens: 800,
+      }),
+    });
+  } catch (err) {
+    // #region agent log
+    fetch('http://127.0.0.1:7911/ingest/801965d5-3f5c-4d14-80b2-cf170cfa8be7',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'6ad995'},body:JSON.stringify({sessionId:'6ad995',runId:'pre-fix',hypothesisId:'C-E',location:'deepseekApi.ts:fetch-catch',message:'DeepSeek fetch threw',data:{errorName:err instanceof Error?err.name:'unknown',errorMessage:err instanceof Error?err.message:String(err),elapsedMs:Date.now()-requestStart,bodyBytes,messageCount:messages.length},timestamp:Date.now()})}).catch(()=>{});
+    // #endregion
+    throw err;
+  }
 
+  const elapsedMs = Date.now() - requestStart;
   if (!response.ok) {
     const errorText = await response.text();
+    // #region agent log
+    fetch('http://127.0.0.1:7911/ingest/801965d5-3f5c-4d14-80b2-cf170cfa8be7',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'6ad995'},body:JSON.stringify({sessionId:'6ad995',runId:'pre-fix',hypothesisId:'C',location:'deepseekApi.ts:http-error',message:'DeepSeek HTTP error',data:{status:response.status,errorText:errorText.slice(0,300),elapsedMs},timestamp:Date.now()})}).catch(()=>{});
+    // #endregion
     throw new Error(`DeepSeek API 请求失败 (${response.status})：${errorText}`);
   }
 
@@ -343,6 +357,10 @@ async function requestDeepSeek(
   if (!rawText) {
     throw new Error('DeepSeek API 返回内容为空，请稍后重试');
   }
+
+  // #region agent log
+  fetch('http://127.0.0.1:7911/ingest/801965d5-3f5c-4d14-80b2-cf170cfa8be7',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'6ad995'},body:JSON.stringify({sessionId:'6ad995',runId:'pre-fix',hypothesisId:'C-E',location:'deepseekApi.ts:fetch-ok',message:'DeepSeek fetch ok',data:{elapsedMs,rawTextLength:rawText.length},timestamp:Date.now()})}).catch(()=>{});
+  // #endregion
 
   return { parsed: parseDeepSeekResponse(rawText), rawText };
 }
@@ -362,7 +380,7 @@ export async function getDialogueResponse(
   const messages = buildMessages(round, dialogueHistory, hiddenClues, soulPool);
 
   // #region agent log
-  fetch('http://127.0.0.1:7911/ingest/801965d5-3f5c-4d14-80b2-cf170cfa8be7',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'c6a3d3'},body:JSON.stringify({sessionId:'c6a3d3',runId:'dialogue-fix',location:'deepseekApi.ts:request',message:'API call params',data:{round,expectedSpeaker:round===2?pickRound2Speaker(soulPool):round===3?pickRound3Speaker(soulPool):'wisdom',soulPool,hiddenCluesPreview:hiddenClues.slice(0,300),historyLength:dialogueHistory.length,historyRoles:dialogueHistory.map(m=>({role:m.role,speaker:m.speaker,contentPreview:m.content.slice(0,60)}))},timestamp:Date.now(),hypothesisId:'A-B-C-D'})}).catch(()=>{});
+  fetch('http://127.0.0.1:7911/ingest/801965d5-3f5c-4d14-80b2-cf170cfa8be7',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'6ad995'},body:JSON.stringify({sessionId:'6ad995',runId:'pre-fix',location:'deepseekApi.ts:request',message:'API call params',data:{round,expectedSpeaker:round===2?pickRound2Speaker(soulPool):round===3?pickRound3Speaker(soulPool):'wisdom',historyLength:dialogueHistory.length,hiddenCluesLen:hiddenClues.length},timestamp:Date.now(),hypothesisId:'E'})}).catch(()=>{});
   // #endregion
 
   let { parsed, rawText } = await requestDeepSeek(messages);
@@ -370,7 +388,7 @@ export async function getDialogueResponse(
 
   if (round >= 2 && isDuplicateMessage(result.message, dialogueHistory)) {
     // #region agent log
-    fetch('http://127.0.0.1:7911/ingest/801965d5-3f5c-4d14-80b2-cf170cfa8be7',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'c6a3d3'},body:JSON.stringify({sessionId:'c6a3d3',runId:'dialogue-fix',location:'deepseekApi.ts:duplicate-retry',message:'Duplicate detected, retrying',data:{round,duplicateMessage:result.message.slice(0,80)},timestamp:Date.now(),hypothesisId:'A'})}).catch(()=>{});
+    fetch('http://127.0.0.1:7911/ingest/801965d5-3f5c-4d14-80b2-cf170cfa8be7',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'6ad995'},body:JSON.stringify({sessionId:'6ad995',runId:'pre-fix',location:'deepseekApi.ts:duplicate-retry',message:'Duplicate detected, retrying',data:{round,duplicateMessage:result.message.slice(0,80)},timestamp:Date.now(),hypothesisId:'E'})}).catch(()=>{});
     // #endregion
 
     const retryMessages = [
@@ -386,7 +404,7 @@ export async function getDialogueResponse(
   }
 
   // #region agent log
-  fetch('http://127.0.0.1:7911/ingest/801965d5-3f5c-4d14-80b2-cf170cfa8be7',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'c6a3d3'},body:JSON.stringify({sessionId:'c6a3d3',runId:'dialogue-fix',location:'deepseekApi.ts:response',message:'DeepSeek response after enforce',data:{round,speaker:result.speaker,messagePreview:result.message.slice(0,100),soul_pool:result.soul_pool,is_complete:result.is_complete,isDuplicate:isDuplicateMessage(result.message,dialogueHistory),rawTextPreview:rawText.slice(0,200)},timestamp:Date.now(),hypothesisId:'A-B-C-D'})}).catch(()=>{});
+  fetch('http://127.0.0.1:7911/ingest/801965d5-3f5c-4d14-80b2-cf170cfa8be7',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'6ad995'},body:JSON.stringify({sessionId:'6ad995',runId:'pre-fix',location:'deepseekApi.ts:response',message:'DeepSeek response after enforce',data:{round,speaker:result.speaker,is_complete:result.is_complete},timestamp:Date.now(),hypothesisId:'E'})}).catch(()=>{});
   // #endregion
 
   return result;

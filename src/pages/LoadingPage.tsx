@@ -58,6 +58,11 @@ const LoadingPage = () => {
 
     const abortController = new AbortController();
     let cancelled = false;
+    const effectId = Math.random().toString(36).slice(2, 8);
+
+    // #region agent log
+    fetch('http://127.0.0.1:7911/ingest/801965d5-3f5c-4d14-80b2-cf170cfa8be7',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'6ad995'},body:JSON.stringify({sessionId:'6ad995',runId:'pre-fix',hypothesisId:'A-D',location:'LoadingPage.tsx:effect-start',message:'Analysis effect started',data:{effectId,photoUrlLength:photoUrl.length},timestamp:Date.now()})}).catch(()=>{});
+    // #endregion
 
     const run = async () => {
       setObservationRecord(null);
@@ -78,8 +83,16 @@ const LoadingPage = () => {
         setStage('dialogue');
         setLoading(false);
         navigate('/dialogue');
+        // #region agent log
+        fetch('http://127.0.0.1:7911/ingest/801965d5-3f5c-4d14-80b2-cf170cfa8be7',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'6ad995'},body:JSON.stringify({sessionId:'6ad995',runId:'pre-fix',hypothesisId:'A',location:'LoadingPage.tsx:analysis-success',message:'Analysis complete',data:{effectId},timestamp:Date.now()})}).catch(()=>{});
+        // #endregion
       } catch (err) {
-        if (cancelled || (err instanceof DOMException && err.name === 'AbortError')) return;
+        const isAbort = err instanceof DOMException && err.name === 'AbortError';
+        const errMsg = err instanceof Error ? err.message : String(err);
+        // #region agent log
+        fetch('http://127.0.0.1:7911/ingest/801965d5-3f5c-4d14-80b2-cf170cfa8be7',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'6ad995'},body:JSON.stringify({sessionId:'6ad995',runId:'pre-fix',hypothesisId:'A-D',location:'LoadingPage.tsx:analysis-catch',message:'Analysis error caught',data:{effectId,cancelled,isAbort,signalAborted:abortController.signal.aborted,errorName:err instanceof Error?err.name:'unknown',errorMessage:errMsg},timestamp:Date.now()})}).catch(()=>{});
+        // #endregion
+        if (cancelled || isAbort) return;
 
         const message = err instanceof Error ? err.message : '图片分析失败，请重试';
         setAnalysisError(message);
@@ -91,6 +104,9 @@ const LoadingPage = () => {
 
     return () => {
       cancelled = true;
+      // #region agent log
+      fetch('http://127.0.0.1:7911/ingest/801965d5-3f5c-4d14-80b2-cf170cfa8be7',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'6ad995'},body:JSON.stringify({sessionId:'6ad995',runId:'pre-fix',hypothesisId:'A-D',location:'LoadingPage.tsx:effect-cleanup',message:'Analysis effect cleanup',data:{effectId,signalAborted:abortController.signal.aborted},timestamp:Date.now()})}).catch(()=>{});
+      // #endregion
       abortController.abort();
     };
   }, [photoUrl, navigate, setVisualAnalysis, setCurrentSpeaker, setCurrentRound, setStage, setLoading, updateSoulPool]);

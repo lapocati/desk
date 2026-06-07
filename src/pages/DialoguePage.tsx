@@ -126,6 +126,10 @@ const DialoguePage = () => {
         setCurrentSpeaker(resp.speaker as SpiritType);
         updateSoulPool(resp.soul_pool);
       } catch (err) {
+        const errMsg = err instanceof Error ? err.message : String(err);
+        // #region agent log
+        fetch('http://127.0.0.1:7911/ingest/801965d5-3f5c-4d14-80b2-cf170cfa8be7',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'6ad995'},body:JSON.stringify({sessionId:'6ad995',runId:'pre-fix',hypothesisId:'C-E',location:'DialoguePage.tsx:round1-catch',message:'Round1 init error',data:{errorName:err instanceof Error?err.name:'unknown',errorMessage:errMsg,hasVisualAnalysis:!!visualAnalysis},timestamp:Date.now()})}).catch(()=>{});
+        // #endregion
         setFetchError(err instanceof Error ? err.message : '灵宠走神了，请稍后重试');
       } finally {
         setIsFetching(false);
