@@ -6,7 +6,6 @@ import {
   ArrowLeft,
   Upload,
   ArrowRight,
-  Loader2,
   RefreshCw,
   Camera,
 } from 'lucide-react';
@@ -14,6 +13,7 @@ import { useAppStore } from '@/store';
 import { SPIRITS } from '@/constants';
 import PageShell from '@/components/PageShell';
 import MemoryArchiveCard from '@/components/MemoryArchiveCard';
+import FriendPkLoadingScene from '@/components/FriendPkLoadingScene';
 import { WashiTape } from '@/components/ScrapbookDecor';
 import { analyzeFriendForPk } from '@/utils/analyzeFriendForPk';
 import { mapFinalResultToPkInput } from '@/utils/mapFinalResultToPkInput';
@@ -30,6 +30,7 @@ const ComparePage = () => {
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const finalResult = useAppStore((state) => state.finalResult);
+  const photoUrl = useAppStore((state) => state.photoUrl);
   const friendResult = useAppStore((state) => state.friendResult);
   const pkRelationship = useAppStore((state) => state.pkRelationship);
   const isAnalyzingFriend = useAppStore((state) => state.isAnalyzingFriend);
@@ -160,6 +161,7 @@ const ComparePage = () => {
   const showUpload = !showResult && !showPkRetry && !isLoading;
   const showAnalyzing = isLoading;
   const loadingMsg = PK_LOADING_MESSAGES[loadingMsgIndex % PK_LOADING_MESSAGES.length];
+  const loadingStage = isAnalyzingFriend ? 'analyzing-friend' : 'building-pk';
 
   const primarySpirit = SPIRITS[finalResult.primarySpirit];
   const friendSpirit = friendResult ? SPIRITS[friendResult.primarySpirit] : null;
@@ -167,23 +169,27 @@ const ComparePage = () => {
   return (
     <PageShell ambience="celebration" bgClass="from-archive-bg to-journal-secondary">
       <motion.div
-        className="min-h-screen flex flex-col items-center px-4 py-8"
+        className={`flex flex-col items-center px-4 ${
+          showAnalyzing ? 'h-[100dvh] overflow-hidden py-3 sm:py-4' : 'min-h-screen py-8'
+        }`}
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         exit={{ opacity: 0 }}
       >
-        <motion.div
-          className="text-center mb-8"
-          initial={{ opacity: 0, y: -20 }}
-          animate={{ opacity: 1, y: 0 }}
-        >
-          <h2 className="text-3xl font-song font-bold text-gradient-warm mb-2">
-            守护灵PK
-          </h2>
-          <p className="text-journal-muted font-hei">
-            {showUpload ? '上传好友的桌面照片，看看守护灵们的相处预测' : '看看你们的守护灵相处预测'}
-          </p>
-        </motion.div>
+        {!showAnalyzing && (
+          <motion.div
+            className="text-center mb-8"
+            initial={{ opacity: 0, y: -20 }}
+            animate={{ opacity: 1, y: 0 }}
+          >
+            <h2 className="text-3xl font-song font-bold text-gradient-warm mb-2">
+              守护灵PK
+            </h2>
+            <p className="text-journal-muted font-hei">
+              {showUpload ? '上传好友的桌面照片，看看守护灵们的相处预测' : '看看你们的守护灵相处预测'}
+            </p>
+          </motion.div>
+        )}
 
         {showUpload && (
           <>
@@ -253,9 +259,20 @@ const ComparePage = () => {
         )}
 
         {showAnalyzing && (
-          <motion.div className="flex flex-col items-center gap-6" initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
-            <Loader2 className="w-12 h-12 text-journal-accent animate-spin" />
-            <p className="text-journal-text font-hei">{loadingMsg}</p>
+          <motion.div
+            className="w-full flex-1 min-h-0"
+            initial={{ opacity: 0, y: 12 }}
+            animate={{ opacity: 1, y: 0 }}
+          >
+            <FriendPkLoadingScene
+              userPhotoUrl={photoUrl}
+              friendPhotoUrl={previewUrl}
+              userResult={finalResult}
+              friendResult={friendResult}
+              stage={loadingStage}
+              messageIndex={loadingMsgIndex}
+            />
+            <p className="sr-only">{loadingMsg}</p>
           </motion.div>
         )}
 

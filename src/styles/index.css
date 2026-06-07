@@ -152,4 +152,69 @@
     box-shadow: 0 2px 12px color-mix(in srgb, var(--spirit-color, #E7B96A) 20%, transparent),
                 0 4px 16px color-mix(in srgb, var(--spirit-color, #E7B96A) 10%, transparent);
   }
+
+  .scrapbook-board-texture {
+    background-image:
+      radial-gradient(circle at 20% 18%, rgba(255, 255, 255, 0.85), transparent 18%),
+      radial-gradient(circle at 82% 26%, rgba(250, 217, 187, 0.28), transparent 20%),
+      linear-gradient(135deg, rgba(244, 229, 214, 0.55), transparent 42%),
+      repeating-linear-gradient(
+        0deg,
+        transparent,
+        transparent 24px,
+        rgba(231, 213, 194, 0.25) 24px,
+        rgba(231, 213, 194, 0.25) 25px
+      );
+  }
+
+  .scrapbook-dashed::after {
+    content: '';
+    position: absolute;
+    inset: 14px;
+    border: 1px dashed rgba(214, 191, 163, 0.7);
+    border-radius: 22px;
+    pointer-events: none;
+  }
+
+  .paper-edge-shadow {
+    box-shadow:
+      0 12px 34px rgba(113, 87, 61, 0.12),
+      inset 0 1px 0 rgba(255, 255, 255, 0.85),
+      inset 0 -1px 0 rgba(237, 220, 198, 0.65);
+  }
+
+  .piece-glow-ring {
+    background:
+      radial-gradient(circle, color-mix(in srgb, var(--piece-accent, #F2B6A0) 46%, transparent) 0%, transparent 70%);
+    filter: blur(8px);
+  }
+
+  .paper-corner-lift {
+    transform-origin: top right;
+    animation: paper-corner-lift 4.6s ease-in-out infinite;
+  }
+
+  .sticker-warm-bob {
+    animation: sticker-warm-bob 4.2s ease-in-out infinite;
+  }
+}
+
+@keyframes paper-corner-lift {
+  0%, 100% {
+    transform: rotate(0deg) translate3d(0, 0, 0);
+    opacity: 0.9;
+  }
+  50% {
+    transform: rotate(5deg) translate3d(-1px, 2px, 0);
+    opacity: 1;
+  }
+}
+
+@keyframes sticker-warm-bob {
+  0%, 100% {
+    transform: translateY(0) scale(1);
+  }
+  50% {
+    transform: translateY(-4px) scale(1.03);
+  }
 }
